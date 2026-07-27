@@ -1333,17 +1333,30 @@ function bindAdminLoginView() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     alertBox.classList.add("hidden"); submitBtn.disabled = true; submitLabel.innerHTML = '<span class="spinner"></span>';
+
+    let cred;
     try {
-      const cred = await signInWithEmailAndPassword(auth, document.getElementById("adminEmail").value.trim(), document.getElementById("adminPassword").value);
-      const snap = await getDoc(doc(db, "users", cred.user.uid));
+      cred = await signInWithEmailAndPassword(auth, document.getElementById("adminEmail").value.trim(), document.getElementById("adminPassword").value);
+    } catch {
+      alertBox.textContent = "Invalid email or password.";
+      alertBox.classList.remove("hidden");
+      submitBtn.disabled = false; submitLabel.textContent = "Access Dashboard";
+      return;
+    }
+
+    try {
+      const snap = await withTimeout(getDoc(doc(db, "users", cred.user.uid)), 10000);
       if (!snap.exists() || snap.data().role !== "admin") {
         await signOut(auth);
-        alertBox.textContent = "This account does not have admin access."; alertBox.classList.remove("hidden");
+        alertBox.textContent = "This account signed in fine, but it isn't marked as admin yet. In Firestore, open users/" + cred.user.uid + " and make sure it has a field role = \"admin\".";
+        alertBox.classList.remove("hidden");
         submitBtn.disabled = false; submitLabel.textContent = "Access Dashboard"; return;
       }
       window.location.hash = "#/admin";
     } catch {
-      alertBox.textContent = "Invalid email or password."; alertBox.classList.remove("hidden");
+      await signOut(auth);
+      alertBox.textContent = "Signed in, but couldn't confirm admin access — this usually means Firestore security rules aren't published yet, or are blocking this read. Check the rules and try again.";
+      alertBox.classList.remove("hidden");
       submitBtn.disabled = false; submitLabel.textContent = "Access Dashboard";
     }
   });
@@ -1681,7 +1694,7 @@ async function render() {
     if (!currentUser) { window.location.hash = "#/admin-login"; return; }
     if (!isAdminChecked) {
       document.getElementById("app").innerHTML = loadingHtml("Checking admin access…");
-      try { const snap = await getDoc(doc(db, "users", currentUser.uid)); isAdminUser = snap.exists() && snap.data().role === "admin"; }
+      try { const snap = await withTimeout(getDoc(doc(db, "users", currentUser.uid)), 10000); isAdminUser = snap.exists() && snap.data().role === "admin"; }
       catch { isAdminUser = false; }
       isAdminChecked = true;
       render();
