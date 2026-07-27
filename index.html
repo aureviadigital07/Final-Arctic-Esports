@@ -163,7 +163,7 @@ const CONFIG = {
   whatsappFallback: {
     community: "YOUR_COMMUNITY_GROUP_LINK", // homepage "Join Our WhatsApp Community" button
     weekly_war: "YOUR_WEEKLY_GROUP_LINK",
-    weekend_war: "https://chat.whatsapp.com/L991P0JBX0KJZ66dH0TDWK?s=cl&p=i&mlu=0",
+    weekend_war: "YOUR_WEEKEND_GROUP_LINK",
     default: "YOUR_WHATSAPP_GROUP_LINK", // used only if a specific slot/tournament link isn't set yet
   },
 
@@ -172,7 +172,11 @@ const CONFIG = {
   // editing the page.
   fees: { dailyGrind: 60, weeklyWar: 150, weekendWar: 150 },
 
-  adminUid: "UMER_07_TAKILDAR",
+  // adminUid/adminEmail here are informational only — they don't grant
+  // access by themselves. Real admin access comes from a Firestore doc at
+  // users/{uid} with role: "admin" (see README notes in chat / bottom of
+  // file). Fill in adminUid once you've created the Firebase Auth account.
+  adminUid: "YOUR_ADMIN_UID",
   adminEmail: "umertakildar70@gmail.com",
   adminWhatsappNumber: "7385009275",
 };
@@ -1036,6 +1040,18 @@ function registerView(params) {
     </form>
   </div>`;
 }
+// Silent admin notification — fires a background request only, never
+// shown to or awaited by the buyer. Does nothing until CONFIG.backendBaseUrl
+// points at a real backend that forwards this to WhatsApp (see the
+// BACKEND REFERENCE comment at the bottom of this file for what that
+// backend needs to do with the WhatsApp Business API).
+function notifyAdmin(event, payload) {
+  if (!CONFIG.backendBaseUrl || CONFIG.backendBaseUrl === "YOUR_BACKEND_BASE_URL") return;
+  fetch(`${CONFIG.backendBaseUrl}/notify`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ channel: "whatsapp", to: CONFIG.adminWhatsappNumber, event, payload }),
+  }).catch(() => { /* best-effort — never surfaced to the buyer */ });
+}
 function staticGroupLink(category, ctx = {}) {
   if (category === "daily-grind" && ctx.slot) {
     const slot = DEFAULT_SLOTS.find((s) => s.id === ctx.slot);
@@ -1086,21 +1102,29 @@ function bindRegisterView() {
     try {
       const registrationId = data.paymentId; // dedupe key — one registration per verified payment
       const groupLink = await fetchGroupLink(data.category, { slot: data.slot, tournamentId: data.tournamentId });
-      const existing = await getDoc(doc(db, "registrations", registrationId));
+      const existing = await withTimeout(getDoc(doc(db, "registrations", registrationId)), 10000);
       if (existing.exists()) throw new Error("duplicate");
 
-      await setDoc(doc(db, "registrations", registrationId), {
+      await withTimeout(setDoc(doc(db, "registrations", registrationId), {
         registrationId, uid: currentUser.uid, category: data.category, categoryLabel: data.categoryLabel,
         slot: data.slot, slotLabel: data.slotLabel, entryFee: Number(data.fee), paymentStatus: "Paid",
         paymentId: data.paymentId, teamName: data.teamName.trim(), mobileNumber: data.mobileNumber.trim(),
         joinGroupLink: groupLink, createdAt: serverTimestamp(),
-      });
+      }), 10000);
 
       const receiptNumber = generateReceiptNumber();
-      await addDoc(collection(db, "orders"), {
+      await withTimeout(addDoc(collection(db, "orders"), {
         registrationId, uid: currentUser.uid, category: data.category, categoryLabel: data.categoryLabel,
         slot: data.slot, slotLabel: data.slotLabel, amount: Number(data.fee), paymentStatus: "Paid",
         paymentId: data.paymentId, receiptNumber, createdAt: serverTimestamp(),
+      }), 10000);
+
+      // Silent, fire-and-forget — the buyer never sees this and it never
+      // blocks or delays their flow either way.
+      notifyAdmin("new_registration", {
+        teamName: data.teamName.trim(), mobileNumber: data.mobileNumber.trim(),
+        category: data.categoryLabel, slot: data.slotLabel, fee: data.fee,
+        paymentId: data.paymentId, receiptNumber,
       });
 
       window.location.hash = `#/${buildHash("success", { category: data.categoryLabel, groupLink, receiptNumber })}`;
