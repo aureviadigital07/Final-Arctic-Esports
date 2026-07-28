@@ -769,6 +769,7 @@ function bindLoginView() {
     alertBox.classList.remove("hidden");
   }
   function friendlyAuthError(err) {
+    if (err.message === "timeout") return "This is taking too long — check your internet connection and try again.";
     const map = {
       "auth/invalid-email": "That email address looks invalid.",
       "auth/user-not-found": "No account found with that email.",
@@ -781,17 +782,17 @@ function bindLoginView() {
   }
   async function upsertUserProfile(user, provider) {
     const ref = doc(db, "users", user.uid);
-    const snap = await getDoc(ref);
+    const snap = await withTimeout(getDoc(ref), 10000);
     if (!snap.exists()) {
-      await setDoc(ref, { uid: user.uid, name: user.displayName || "", email: user.email || "", photoURL: user.photoURL || "", phone: user.phoneNumber || "", provider, createdAt: serverTimestamp(), lastLogin: serverTimestamp() });
+      await withTimeout(setDoc(ref, { uid: user.uid, name: user.displayName || "", email: user.email || "", photoURL: user.photoURL || "", phone: user.phoneNumber || "", provider, createdAt: serverTimestamp(), lastLogin: serverTimestamp() }), 10000);
     } else {
-      await setDoc(ref, { lastLogin: serverTimestamp() }, { merge: true });
+      await withTimeout(setDoc(ref, { lastLogin: serverTimestamp() }, { merge: true }), 10000);
     }
   }
 
   document.getElementById("googleBtn").addEventListener("click", async () => {
     try {
-      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      const result = await withTimeout(signInWithPopup(auth, new GoogleAuthProvider()), 30000);
       await upsertUserProfile(result.user, "google");
       consumeReturnTo();
     } catch (err) { showAlert(friendlyAuthError(err)); }
@@ -800,7 +801,7 @@ function bindLoginView() {
   document.getElementById("forgotBtn").addEventListener("click", async () => {
     const email = document.getElementById("loginEmail").value.trim();
     if (!email) return showAlert('Enter your email above first, then tap "Forgot password?"');
-    try { await sendPasswordResetEmail(auth, email); showAlert("Password reset email sent.", "success"); }
+    try { await withTimeout(sendPasswordResetEmail(auth, email), 15000); showAlert("Password reset email sent.", "success"); }
     catch (err) { showAlert(friendlyAuthError(err)); }
   });
 
@@ -813,12 +814,12 @@ function bindLoginView() {
     try {
       if (mode === "create") {
         if (!document.getElementById("termsCheck").checked) throw { code: "terms" };
-        const result = await createUserWithEmailAndPassword(auth, email, password);
-        await sendEmailVerification(result.user);
+        const result = await withTimeout(createUserWithEmailAndPassword(auth, email, password), 15000);
+        await withTimeout(sendEmailVerification(result.user), 15000);
         await upsertUserProfile(result.user, "password");
         showAlert("Account created — verification email sent. You can continue now.", "success");
       } else {
-        const result = await signInWithEmailAndPassword(auth, email, password);
+        const result = await withTimeout(signInWithEmailAndPassword(auth, email, password), 15000);
         await upsertUserProfile(result.user, "password");
       }
       consumeReturnTo();
@@ -1336,9 +1337,11 @@ function bindAdminLoginView() {
 
     let cred;
     try {
-      cred = await signInWithEmailAndPassword(auth, document.getElementById("adminEmail").value.trim(), document.getElementById("adminPassword").value);
-    } catch {
-      alertBox.textContent = "Invalid email or password.";
+      cred = await withTimeout(signInWithEmailAndPassword(auth, document.getElementById("adminEmail").value.trim(), document.getElementById("adminPassword").value), 15000);
+    } catch (err) {
+      alertBox.textContent = err.message === "timeout"
+        ? "This is taking too long — check your internet connection and try again."
+        : "Invalid email or password.";
       alertBox.classList.remove("hidden");
       submitBtn.disabled = false; submitLabel.textContent = "Access Dashboard";
       return;
