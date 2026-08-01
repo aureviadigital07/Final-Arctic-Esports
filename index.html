@@ -3,206 +3,339 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AUREVIA CLOTHING — Premium Sportswear & Apparel</title>
-<meta name="description" content="AUREVIA CLOTHING — premium jerseys, sportswear and apparel. PAN India delivery.">
+<title>AUREVIA CLOTHING — Premium Fashion, Redefined</title>
+<meta name="description" content="AUREVIA CLOTHING — premium sports jerseys and stylish apparel, PAN India delivery.">
 
-<!-- Tailwind CDN -->
+<!-- ============ FONTS ============ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- ============ TAILWIND ============ -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Fonts: Fraunces for the wordmark/display, Inter for everything functional -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-<!-- Firebase (compat build — simplest for a single static file, no bundler) -->
+<!-- ============ FIREBASE (compat SDK — single-file friendly) ============ -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
-/* ============================================================
-   AUREVIA CLOTHING — core design tokens
-   White premium luxury theme. Everything else derives from these.
-   ============================================================ */
-:root{
-  --bg:#FFFFFF;
-  --text:#111111;
-  --grey:#F4F4F2;      /* minimal accent grey */
-  --grey-line:#E7E7E4;
-  --btn-bg:#111111;
-  --btn-text:#FFFFFF;
-  --red:#B3181A;
-}
-*{box-sizing:border-box;}
-html,body{background:var(--bg);color:var(--text);}
-body{font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden;}
-.font-display{font-family:'Fraunces',serif;}
-::selection{background:#111;color:#fff;}
-a{-webkit-tap-highlight-color:transparent;}
+  :root{
+    --bg:#FFFFFF;
+    --ink:#111111;
+    --grey:#F4F4F3;
+    --grey-line:#E4E3E0;
+    --grey-mid:#8A8783;
+    --red:#B21F24;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .font-display{font-family:'Fraunces',serif;}
+  ::selection{background:var(--ink);color:#fff;}
 
-/* scrollbar, subtle */
-::-webkit-scrollbar{width:8px;}
-::-webkit-scrollbar-thumb{background:#ddd;border-radius:8px;}
+  /* Focus visibility for accessibility */
+  a:focus-visible, button:focus-visible, input:focus-visible{
+    outline:2px solid var(--ink); outline-offset:2px;
+  }
 
-/* generic fade/slide helpers */
-.view{animation:fadeIn .45s ease both;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-@media (prefers-reduced-motion: reduce){
-  .view{animation:none;}
-  *{transition:none !important; animation-duration:.001s !important;}
-}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
 
-/* drawer / cart / search sliding panels */
-.panel{transform:translateX(100%);transition:transform .4s cubic-bezier(.16,1,.3,1);}
-.panel.open{transform:translateX(0);}
-.panel-left{transform:translateX(-100%);}
-.panel-left.open{transform:translateX(0);}
-.overlay{opacity:0;pointer-events:none;transition:opacity .35s ease;}
-.overlay.open{opacity:1;pointer-events:auto;}
+  /* ---- Buttons ---- */
+  .btn-primary{
+    background:var(--ink); color:#fff; letter-spacing:.08em; text-transform:uppercase;
+    font-size:.75rem; font-weight:600; padding:.95rem 2rem; border-radius:2px;
+    transition:transform .25s cubic-bezier(.2,.8,.2,1), background .25s ease, opacity .25s ease;
+    display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+  }
+  .btn-primary:hover{transform:translateY(-2px); background:#2b2b2b;}
+  .btn-primary:disabled{opacity:.45; transform:none; cursor:not-allowed;}
+  .btn-outline{
+    background:transparent; color:var(--ink); border:1px solid var(--ink); letter-spacing:.08em; text-transform:uppercase;
+    font-size:.75rem; font-weight:600; padding:.9rem 2rem; border-radius:2px;
+    transition:all .25s ease;
+  }
+  .btn-outline:hover{background:var(--ink); color:#fff;}
 
-/* buttons */
-.btn-solid{background:var(--btn-bg);color:var(--btn-text);transition:transform .2s ease, opacity .2s ease;}
-.btn-solid:hover{opacity:.85;transform:translateY(-1px);}
-.btn-outline{border:1px solid #111;color:#111;transition:background .2s ease,color .2s ease;}
-.btn-outline:hover{background:#111;color:#fff;}
+  /* ---- Loader ---- */
+  .spin{animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
 
-/* category 3D cards */
-.cat-card{perspective:1000px;}
-.cat-card-inner{transform-style:preserve-3d;transition:transform .25s ease, box-shadow .25s ease;will-change:transform;}
-.cat-card:hover .cat-card-inner, .cat-card.tilt .cat-card-inner{box-shadow:0 25px 45px -15px rgba(0,0,0,.25);}
-.cat-card img{transition:transform .6s cubic-bezier(.16,1,.3,1);}
-.cat-card:hover img{transform:scale(1.08);}
+  /* ---- Fade/slide utility ---- */
+  .fade-in{animation:fadeIn .5s ease both;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
 
-/* marquee */
-.marquee-track{display:flex;white-space:nowrap;animation:marquee 22s linear infinite;}
-@keyframes marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  /* ---- Announcement marquee (top bar) ---- */
+  .announce-track{display:inline-block; white-space:nowrap; animation:announceScroll 18s linear infinite;}
+  @keyframes announceScroll{from{transform:translateX(0);} to{transform:translateX(-50%);}}
 
-/* product image fade between gallery slides */
-.gallery-slide{transition:opacity .35s ease;}
+  /* ---- Red delivery marquee ---- */
+  .red-marquee-track{display:inline-flex; white-space:nowrap; animation:redScroll 22s linear infinite;}
+  @keyframes redScroll{from{transform:translateX(0);} to{transform:translateX(-50%);}}
 
-/* skeleton loading shimmer for product grid */
-.skel{background:linear-gradient(90deg,#f1f1ef 25%,#e9e9e6 37%,#f1f1ef 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;}
-@keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+  /* ---- Drawer / overlay ---- */
+  .drawer{transform:translateX(-100%); transition:transform .4s cubic-bezier(.2,.8,.2,1);}
+  .drawer.open{transform:translateX(0);}
+  .drawer-right{transform:translateX(100%); transition:transform .4s cubic-bezier(.2,.8,.2,1);}
+  .drawer-right.open{transform:translateX(0);}
+  .overlay-bg{opacity:0; pointer-events:none; transition:opacity .35s ease;}
+  .overlay-bg.open{opacity:1; pointer-events:auto;}
 
-/* focus visibility for keyboard users */
-a:focus-visible, button:focus-visible, input:focus-visible{outline:2px solid #111;outline-offset:2px;}
+  /* ---- 3D category cards ---- */
+  .cat-scene{perspective:1200px;}
+  .cat-card{
+    transform-style:preserve-3d; transition:transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease;
+    will-change:transform;
+  }
+  .cat-card img{transition:transform .6s ease;}
+  .cat-card:hover img{transform:scale(1.08);}
+  .cat-card-inner{transform:translateZ(30px);}
 
-/* size pill */
-.size-pill{border:1px solid #d9d9d6;transition:all .15s ease;}
-.size-pill.selected{background:#111;color:#fff;border-color:#111;}
-.size-pill:hover{border-color:#111;}
+  /* ---- Product image hover swap ---- */
+  .prod-card-img-wrap{overflow:hidden;}
+  .prod-card-img-wrap img{transition:opacity .4s ease, transform .5s ease;}
 
-/* toast */
-#toast{transform:translateY(140%);transition:transform .35s cubic-bezier(.16,1,.3,1);}
-#toast.show{transform:translateY(0);}
+  /* ---- Skeleton ---- */
+  .skeleton{background:linear-gradient(90deg,#f0f0ef 25%,#f7f7f6 37%,#f0f0ef 63%); background-size:400% 100%; animation:skeleton 1.4s ease infinite;}
+  @keyframes skeleton{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
 
-.hide{display:none !important;}
+  /* ---- Toast ---- */
+  #toast-wrap{position:fixed; top:1rem; left:50%; transform:translateX(-50%); z-index:200; display:flex; flex-direction:column; gap:.5rem; align-items:center; width:100%; pointer-events:none;}
+  .toast{background:var(--ink); color:#fff; font-size:.8rem; padding:.7rem 1.3rem; border-radius:2px; box-shadow:0 8px 24px rgba(0,0,0,.18); animation:toastIn .3s ease both;}
+  @keyframes toastIn{from{opacity:0; transform:translateY(-10px);} to{opacity:1; transform:translateY(0);}}
+
+  /* ---- Size chips ---- */
+  .size-chip{border:1px solid var(--grey-line); font-size:.8rem; padding:.55rem 0; text-align:center; cursor:pointer; transition:all .2s ease; border-radius:2px;}
+  .size-chip:hover{border-color:var(--ink);}
+  .size-chip.selected{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .size-chip.disabled{opacity:.35; text-decoration:line-through; cursor:not-allowed;}
+
+  /* ---- Gallery ---- */
+  .gallery-main{aspect-ratio:3/4; overflow:hidden; position:relative; background:var(--grey);}
+  .gallery-main img{width:100%; height:100%; object-fit:cover; touch-action:pan-y;}
+  .gallery-arrow{position:absolute; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.9); width:2.5rem; height:2.5rem; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,.12); transition:transform .2s ease;}
+  .gallery-arrow:hover{transform:translateY(-50%) scale(1.08);}
+
+  /* nav underline */
+  .nav-link{position:relative;}
+  .nav-link::after{content:'';position:absolute;left:0;bottom:-2px;width:0;height:1px;background:var(--ink);transition:width .3s ease;}
+  .nav-link:hover::after{width:100%;}
+
+  input[type=text],input[type=email],input[type=tel],input[type=password]{
+    border:1px solid var(--grey-line); background:#fff; padding:.85rem 1rem; font-size:.9rem; width:100%; border-radius:2px;
+    transition:border-color .2s ease;
+  }
+  input:focus{border-color:var(--ink); outline:none;}
+
+  #recaptcha-container{display:flex; justify-content:center;}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:#d8d6d2; border-radius:8px;}
 </style>
 </head>
-<body class="bg-white text-[#111]">
+<body class="bg-white text-[#111111]">
+
+<div id="toast-wrap"></div>
 
 <!-- ============================================================
-     LOGIN GATE — full screen, shown before any auth state resolves
-     to the "logged in" state. Renders on top of everything.
-     ============================================================ -->
-<div id="loginGate" class="fixed inset-0 z-[100] bg-white flex items-center justify-center px-5">
-  <div class="w-full max-w-sm">
-    <div class="text-center mb-8">
-      <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650" alt="Aurevia Clothing" class="h-14 mx-auto mb-6 object-contain">
-      <h1 class="font-display text-2xl tracking-tight">Welcome to AUREVIA</h1>
-      <p class="text-sm text-gray-500 mt-1">Sign in to continue to premium sportswear & apparel</p>
+     LOGIN SCREEN — first thing the user sees. App is hidden
+     behind this until Firebase confirms an authenticated session.
+============================================================= -->
+<div id="login-screen" class="fixed inset-0 z-[100] bg-white flex items-center justify-center px-5 py-10 overflow-y-auto">
+  <div class="w-full max-w-md fade-in">
+    <div class="flex flex-col items-center mb-8">
+      <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650" alt="Aurevia Clothing" class="h-12 mb-6 object-contain" onerror="this.style.display='none'">
+      <h1 class="font-display text-2xl tracking-tight">Welcome to Aurevia</h1>
+      <p class="text-sm text-[#8A8783] mt-2 text-center">Sign in to continue to premium apparel, curated for you.</p>
     </div>
 
-    <div class="space-y-3" id="loginOptions">
-      <button onclick="AUREVIA.auth.google()" class="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-full py-3 text-sm font-medium hover:border-black transition">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#111" d="M43.6 20.5H42V20.4H24v7.2h11.3c-1.6 4.6-6 7.9-11.3 7.9-6.9 0-12.5-5.6-12.5-12.5S17.1 10.5 24 10.5c3.2 0 6.1 1.2 8.3 3.2l5.1-5.1C34.1 5.5 29.3 3.5 24 3.5 12.7 3.5 3.5 12.7 3.5 24S12.7 44.5 24 44.5 44.5 35.3 44.5 24c0-1.2-.1-2.4-.3-3.5z"/></svg>
-        Continue with Google
-      </button>
-      <button onclick="AUREVIA.auth.facebook()" class="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-full py-3 text-sm font-medium hover:border-black transition">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="#111"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06C2 17.06 5.66 21.2 10.44 22v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.91h-2.33V22C18.34 21.2 22 17.06 22 12.06Z"/></svg>
-        Continue with Facebook
-      </button>
-      <button onclick="AUREVIA.ui.showEmailLogin()" class="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-full py-3 text-sm font-medium hover:border-black transition">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
-        Continue with Email
-      </button>
-      <button onclick="AUREVIA.ui.showPhoneLogin()" class="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-full py-3 text-sm font-medium hover:border-black transition">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
-        Continue with Phone OTP
-      </button>
-    </div>
+    <div id="login-error" class="hidden text-xs text-[#B21F24] bg-red-50 border border-red-100 rounded px-3 py-2 mb-4"></div>
 
-    <!-- Email login form (hidden by default) -->
-    <div id="emailLoginForm" class="hide mt-5 space-y-2">
-      <input id="emailInput" type="email" placeholder="Email address" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-black outline-none">
-      <input id="passInput" type="password" placeholder="Password" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-black outline-none">
-      <div class="flex gap-2">
-        <button onclick="AUREVIA.auth.emailSignIn()" class="flex-1 btn-solid rounded-full py-3 text-sm">Sign In</button>
-        <button onclick="AUREVIA.auth.emailSignUp()" class="flex-1 btn-outline rounded-full py-3 text-sm">Create Account</button>
+    <!-- Social + Email/Phone toggle views -->
+    <div id="login-main-view">
+      <div class="space-y-3">
+        <button id="btn-google" class="w-full flex items-center justify-center gap-3 border border-[#111111]/15 rounded-sm py-3 text-sm font-medium hover:bg-[#F4F4F3] transition">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#111" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h11.8c-.5 2.7-2.1 5-4.4 6.6v5.4h7.1c4.2-3.9 6.6-9.6 6.6-16.5z"/><path fill="#111" opacity=".7" d="M24 46c6 0 11-2 14.6-5.4l-7.1-5.4c-2 1.3-4.5 2.1-7.5 2.1-5.8 0-10.7-3.9-12.4-9.1H4.3v5.6C7.9 41 15.3 46 24 46z"/><path fill="#111" opacity=".5" d="M11.6 28.2c-.4-1.3-.7-2.7-.7-4.2s.3-2.9.7-4.2v-5.6H4.3C2.8 17.2 2 20.5 2 24s.8 6.8 2.3 9.8l7.3-5.6z"/><path fill="#111" opacity=".3" d="M24 10.7c3.3 0 6.2 1.1 8.5 3.3l6.3-6.3C35 4.1 30 2 24 2 15.3 2 7.9 7 4.3 14.2l7.3 5.6c1.7-5.2 6.6-9.1 12.4-9.1z"/></svg>
+          Continue with Google
+        </button>
+        <button id="btn-facebook" class="w-full flex items-center justify-center gap-3 border border-[#111111]/15 rounded-sm py-3 text-sm font-medium hover:bg-[#F4F4F3] transition">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#111"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.16 8.44 9.94v-7.03H7.9v-2.9h2.54V9.85c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.44 2.9h-2.34V22c4.78-.78 8.44-4.94 8.44-9.94z"/></svg>
+          Continue with Facebook
+        </button>
+        <button id="btn-show-email" class="w-full flex items-center justify-center gap-3 border border-[#111111]/15 rounded-sm py-3 text-sm font-medium hover:bg-[#F4F4F3] transition">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7 10-7"/></svg>
+          Continue with Email
+        </button>
+        <button id="btn-show-phone" class="w-full flex items-center justify-center gap-3 border border-[#111111]/15 rounded-sm py-3 text-sm font-medium hover:bg-[#F4F4F3] transition">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8.1 9.7a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.9 2.2z"/></svg>
+          Continue with Phone
+        </button>
       </div>
-      <button onclick="AUREVIA.ui.showLoginOptions()" class="w-full text-xs text-gray-500 pt-2">← back</button>
     </div>
 
-    <!-- Phone OTP form (hidden by default) -->
-    <div id="phoneLoginForm" class="hide mt-5 space-y-2">
-      <input id="phoneInput" type="tel" placeholder="+91 98765 43210" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-black outline-none">
-      <button onclick="AUREVIA.auth.sendOtp()" class="w-full btn-solid rounded-full py-3 text-sm">Send OTP</button>
-      <div id="otpStep" class="hide space-y-2 pt-2">
-        <input id="otpInput" type="text" placeholder="Enter 6-digit OTP" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-black outline-none">
-        <button onclick="AUREVIA.auth.verifyOtp()" class="w-full btn-solid rounded-full py-3 text-sm">Verify & Continue</button>
+    <!-- Email login/signup form -->
+    <div id="login-email-view" class="hidden">
+      <button class="text-xs text-[#8A8783] mb-4 flex items-center gap-1 back-btn"><span>&larr;</span> Back</button>
+      <div class="space-y-3">
+        <input type="email" id="email-input" placeholder="Email address" autocomplete="email">
+        <input type="password" id="password-input" placeholder="Password (min. 6 characters)" autocomplete="current-password">
+        <button id="btn-email-submit" class="btn-primary w-full">Sign In</button>
+        <p class="text-xs text-center text-[#8A8783]">No account? <button id="btn-toggle-signup" class="underline text-[#111111]">Create one</button></p>
       </div>
-      <button onclick="AUREVIA.ui.showLoginOptions()" class="w-full text-xs text-gray-500 pt-2">← back</button>
-      <div id="recaptcha-container"></div>
     </div>
 
-    <p id="loginError" class="text-xs text-red-600 mt-3 text-center hide"></p>
-    <p class="text-[11px] text-gray-400 text-center mt-6">By continuing you agree to our Terms of Service & Privacy Policy.</p>
+    <!-- Phone OTP form -->
+    <div id="login-phone-view" class="hidden">
+      <button class="text-xs text-[#8A8783] mb-4 flex items-center gap-1 back-btn"><span>&larr;</span> Back</button>
+      <div id="phone-step-1" class="space-y-3">
+        <input type="tel" id="phone-input" placeholder="+91 98765 43210" autocomplete="tel">
+        <button id="btn-send-otp" class="btn-primary w-full">Send OTP</button>
+      </div>
+      <div id="phone-step-2" class="hidden space-y-3 mt-3">
+        <input type="text" id="otp-input" placeholder="6-digit OTP" inputmode="numeric" maxlength="6">
+        <button id="btn-verify-otp" class="btn-primary w-full">Verify & Continue</button>
+      </div>
+      <div id="recaptcha-container" class="mt-3"></div>
+    </div>
+
+    <p class="text-[11px] text-center text-[#8A8783] mt-8">By continuing, you agree to Aurevia Clothing's Terms of Service and Privacy Policy.</p>
   </div>
 </div>
 
 <!-- ============================================================
-     MAIN APP (hidden until authenticated)
-     ============================================================ -->
-<div id="app" class="hide">
+     APP ROOT — hidden until authenticated
+============================================================= -->
+<div id="app-root" class="hidden">
 
-  <!-- Announcement bar -->
-  <div class="bg-black text-white text-[11px] sm:text-xs text-center py-2 tracking-wide font-medium">
-    FREE SHIPPING — Free Shipping on orders above ₹999
+  <!-- ANNOUNCEMENT BAR -->
+  <div class="bg-[#111111] text-white text-[11px] tracking-wide overflow-hidden py-2">
+    <div class="announce-track">
+      <span class="mx-6">FREE SHIPPING &nbsp;—&nbsp; Free shipping on all orders above ₹999</span>
+      <span class="mx-6">FREE SHIPPING &nbsp;—&nbsp; Free shipping on all orders above ₹999</span>
+    </div>
   </div>
 
-  <!-- Header -->
-  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-[var(--grey-line)]">
+  <!-- HEADER -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-[#E4E3E0]">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-      <button aria-label="Open menu" onclick="AUREVIA.ui.openDrawer()" class="p-2 -ml-2">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-      </button>
-      <a href="#/home" class="flex items-center">
-        <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650" alt="Aurevia" class="h-8 object-contain">
-      </a>
-      <div class="flex items-center gap-1">
-        <button aria-label="Search" onclick="AUREVIA.ui.openSearch()" class="p-2">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <div class="flex items-center gap-4 w-1/3">
+        <button id="btn-hamburger" aria-label="Open menu" class="p-2 -ml-2">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
         </button>
-        <button aria-label="Cart" onclick="AUREVIA.ui.openCart()" class="p-2 relative">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 2H2"/><circle cx="9" cy="20" r="1.4" fill="#111"/><circle cx="17" cy="20" r="1.4" fill="#111"/></svg>
-          <span id="cartBadge" class="hide absolute -top-1 -right-1 bg-black text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">0</span>
+        <button id="btn-search" aria-label="Search" class="p-2 hidden sm:inline-flex">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+      </div>
+      <a href="#/home" class="w-1/3 flex justify-center">
+        <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650" alt="Aurevia Clothing" class="h-8 object-contain" onerror="this.outerHTML='<span class=\'font-display text-lg tracking-wide\'>AUREVIA</span>'">
+      </a>
+      <div class="w-1/3 flex items-center justify-end gap-1">
+        <button id="btn-search-mobile" aria-label="Search" class="p-2 sm:hidden">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <button id="btn-account" aria-label="Account" class="p-2 hidden sm:inline-flex">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+        </button>
+        <button id="btn-cart" aria-label="Cart" class="p-2 relative">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 2H2"/><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></svg>
+          <span id="cart-count" class="hidden absolute -top-0.5 -right-0.5 bg-[#111111] text-white text-[10px] w-4 h-4 rounded-full items-center justify-center">0</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Page mount point -->
-  <main id="pageRoot" class="view min-h-[60vh]"></main>
+  <!-- HAMBURGER SIDE DRAWER -->
+  <div id="drawer-overlay" class="overlay-bg fixed inset-0 bg-black/40 z-[60]"></div>
+  <nav id="drawer-menu" class="drawer fixed top-0 left-0 h-full w-[82%] max-w-sm bg-white z-[70] shadow-2xl flex flex-col">
+    <div class="flex items-center justify-between px-6 h-16 border-b border-[#E4E3E0]">
+      <span class="font-display text-lg">Menu</span>
+      <button id="btn-close-drawer" class="p-2" aria-label="Close menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto py-4">
+      <a href="#/home" class="drawer-link block px-6 py-3 text-sm tracking-wide uppercase hover:bg-[#F4F4F3]">Home</a>
+      <a href="#/products" class="drawer-link block px-6 py-3 text-sm tracking-wide uppercase hover:bg-[#F4F4F3]">Explore All Products</a>
+      <div class="px-6 pt-3 pb-1 text-[11px] uppercase tracking-widest text-[#8A8783]">Categories</div>
+      <a href="#/collection/shirts" class="drawer-link block px-6 py-2.5 text-sm hover:bg-[#F4F4F3]">Shirts</a>
+      <a href="#/collection/jeans" class="drawer-link block px-6 py-2.5 text-sm hover:bg-[#F4F4F3]">Jeans</a>
+      <a href="#/collection/hoodies" class="drawer-link block px-6 py-2.5 text-sm hover:bg-[#F4F4F3]">Hoodies</a>
+      <a href="#/collection/jackets" class="drawer-link block px-6 py-2.5 text-sm hover:bg-[#F4F4F3]">Jackets</a>
+      <a href="#/collection/shoes" class="drawer-link block px-6 py-2.5 text-sm hover:bg-[#F4F4F3]">Shoes</a>
+      <a href="#/collection/gym-accessories" class="drawer-link block px-6 py-2.5 text-sm hover:bg-[#F4F4F3]">Gym Accessories</a>
+      <a href="#/sale" class="drawer-link block px-6 py-2.5 text-sm hover:bg-[#F4F4F3] text-[#B21F24]">End of Season Sale</a>
+      <div class="border-t border-[#E4E3E0] mt-3 pt-3">
+        <a href="#/about" class="drawer-link block px-6 py-3 text-sm tracking-wide uppercase hover:bg-[#F4F4F3]">About Us</a>
+        <a href="#/contact" class="drawer-link block px-6 py-3 text-sm tracking-wide uppercase hover:bg-[#F4F4F3]">Contact Us</a>
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t border-[#E4E3E0]">
+      <button id="btn-logout" class="text-xs uppercase tracking-widest text-[#8A8783] hover:text-[#111111]">Sign out</button>
+    </div>
+  </nav>
 
-  <!-- Footer -->
-  <footer class="bg-[var(--grey)] mt-24 border-t border-[var(--grey-line)]">
-    <div class="max-w-7xl mx-auto px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
+  <!-- SEARCH OVERLAY -->
+  <div id="search-overlay" class="overlay-bg fixed inset-0 bg-white z-[80] flex flex-col">
+    <div class="max-w-3xl w-full mx-auto px-5 pt-8">
+      <div class="flex items-center gap-3 border-b border-[#111111] pb-3">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search-input" type="text" placeholder="Search products, categories, pages…" class="!border-0 !p-0 text-lg flex-1 focus:!ring-0">
+        <button id="btn-close-search" class="p-2" aria-label="Close search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="search-results" class="mt-6 max-h-[70vh] overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- CART DRAWER -->
+  <div id="cart-overlay" class="overlay-bg fixed inset-0 bg-black/40 z-[60]"></div>
+  <aside id="cart-drawer" class="drawer-right fixed top-0 right-0 h-full w-[88%] max-w-md bg-white z-[70] shadow-2xl flex flex-col">
+    <div class="flex items-center justify-between px-6 h-16 border-b border-[#E4E3E0]">
+      <span class="font-display text-lg">Your Bag</span>
+      <button id="btn-close-cart" class="p-2" aria-label="Close cart">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="cart-drawer-items" class="flex-1 overflow-y-auto px-6 py-4 space-y-5"></div>
+    <div id="cart-drawer-footer" class="border-t border-[#E4E3E0] px-6 py-5">
+      <div class="flex justify-between text-sm mb-4"><span>Subtotal</span><span id="cart-subtotal" class="font-medium">₹0</span></div>
+      <button id="btn-checkout-drawer" class="btn-primary w-full">Checkout</button>
+      <a href="#/cart" id="btn-view-cart" class="block text-center text-xs uppercase tracking-widest mt-3 underline">View full cart</a>
+    </div>
+  </aside>
+
+  <!-- PAGE CONTENT (SPA router renders here) -->
+  <main id="page-content"></main>
+
+  <!-- FOOTER -->
+  <footer class="bg-[#F4F4F3] mt-20 border-t border-[#E4E3E0]">
+    <div class="max-w-7xl mx-auto px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-8">
       <div class="col-span-2 md:col-span-1">
-        <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650" class="h-8 mb-4 object-contain" alt="Aurevia">
-        <p class="text-gray-500 text-xs leading-relaxed">Premium sports jerseys and apparel, delivered PAN India.</p>
+        <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650" class="h-8 mb-4 object-contain" alt="Aurevia" onerror="this.outerHTML='<span class=\'font-display text-lg\'>AUREVIA</span>'">
+        <p class="text-xs text-[#8A8783] leading-relaxed">Premium sports jerseys and stylish apparel, delivered PAN India.</p>
+        <div class="flex gap-3 mt-5">
+          <a href="https://instagram.com/um3rx70" target="_blank" rel="noopener" aria-label="Instagram" class="w-9 h-9 rounded-full border border-[#111111]/15 flex items-center justify-center hover:bg-[#111111] hover:text-white transition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="3.5"/><circle cx="17.2" cy="6.8" r="1"/></svg>
+          </a>
+          <a href="https://wa.me/917385009275" target="_blank" rel="noopener" aria-label="WhatsApp" class="w-9 h-9 rounded-full border border-[#111111]/15 flex items-center justify-center hover:bg-[#111111] hover:text-white transition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.6 14.3c-.2.6-1.3 1.2-1.9 1.3-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3.1s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.6.7 1.9.8 2 .1.2.1.4 0 .6-.1.2-.2.3-.4.5l-.5.6c-.2.2-.3.4-.1.7.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.5 1.6.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.4.4.1.2.1.9-.1 1.5z"/></svg>
+          </a>
+          <a href="tel:+917385009275" aria-label="Call" class="w-9 h-9 rounded-full border border-[#111111]/15 flex items-center justify-center hover:bg-[#111111] hover:text-white transition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.7a2 2 0 0 1-.4 2.1L8.1 9.7a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.7.6a2 2 0 0 1 1.9 2.2z"/></svg>
+          </a>
+        </div>
       </div>
       <div>
-        <h4 class="font-medium mb-3 text-xs tracking-wider uppercase text-gray-500">Policies</h4>
-        <ul class="space-y-2 text-gray-700">
+        <h4 class="text-xs uppercase tracking-widest font-semibold mb-4">Policies</h4>
+        <ul class="space-y-2 text-xs text-[#4a4a4a]">
           <li><a href="#/terms" class="hover:underline">Terms of Service</a></li>
           <li><a href="#/privacy" class="hover:underline">Privacy Policy</a></li>
           <li><a href="#/shipping" class="hover:underline">Shipping Policy</a></li>
@@ -210,718 +343,988 @@ a:focus-visible, button:focus-visible, input:focus-visible{outline:2px solid #11
         </ul>
       </div>
       <div>
-        <h4 class="font-medium mb-3 text-xs tracking-wider uppercase text-gray-500">Company</h4>
-        <ul class="space-y-2 text-gray-700">
+        <h4 class="text-xs uppercase tracking-widest font-semibold mb-4">Company</h4>
+        <ul class="space-y-2 text-xs text-[#4a4a4a]">
           <li><a href="#/about" class="hover:underline">About Us</a></li>
           <li><a href="#/contact" class="hover:underline">Contact Us</a></li>
-          <li><a href="#/products/all" class="hover:underline">Explore All Products</a></li>
+          <li><a href="#/products" class="hover:underline">All Products</a></li>
+          <li><a href="#/sale" class="hover:underline">End of Season Sale</a></li>
         </ul>
       </div>
       <div>
-        <h4 class="font-medium mb-3 text-xs tracking-wider uppercase text-gray-500">Connect</h4>
-        <div class="flex gap-3 mb-4">
-          <a href="https://instagram.com/um3rx70" target="_blank" aria-label="Instagram" class="p-2 border border-gray-300 rounded-full hover:border-black"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
-          <a href="https://wa.me/917385009275" target="_blank" aria-label="WhatsApp" class="p-2 border border-gray-300 rounded-full hover:border-black"><svg width="16" height="16" viewBox="0 0 24 24" fill="#111"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.9-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 1-2.3.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.6.7 1.9.8 2 .1.2.1.4 0 .6-.1.2-.2.3-.4.5-.2.2-.4.4-.2.7.2.3.9 1.5 2 2.4 1.4 1.2 2.5 1.6 2.8 1.7.3.1.5.1.7-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.7-.1.3.1 1.8.9 2.1 1 .3.2.5.2.6.3.1.2.1.9-.1 1.5z"/></svg></a>
-          <a href="tel:+917385009275" aria-label="Call" class="p-2 border border-gray-300 rounded-full hover:border-black"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.8.6 2.7a2 2 0 01-.4 2.1L8.1 9.7a16 16 0 006 6l1.2-1.2a2 2 0 012.1-.4c.9.3 1.8.5 2.7.6a2 2 0 011.9 2.2z"/></svg></a>
+        <h4 class="text-xs uppercase tracking-widest font-semibold mb-4">We Accept</h4>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2.5 py-1.5 border border-[#111111]/15 rounded text-[10px] font-semibold bg-white">UPI</span>
+          <span class="px-2.5 py-1.5 border border-[#111111]/15 rounded text-[10px] font-semibold bg-white">Visa</span>
+          <span class="px-2.5 py-1.5 border border-[#111111]/15 rounded text-[10px] font-semibold bg-white">Mastercard</span>
+          <span class="px-2.5 py-1.5 border border-[#111111]/15 rounded text-[10px] font-semibold bg-white">Net Banking</span>
         </div>
-        <p class="text-xs text-gray-500">7385009275</p>
+        <h4 class="text-xs uppercase tracking-widest font-semibold mt-5 mb-2">Contact</h4>
+        <p class="text-xs text-[#4a4a4a]">Umer Buniyad Takildar<br>+91 73850 09275<br>Darga Galli Ajara, Kolhapur, Maharashtra</p>
       </div>
     </div>
-    <div class="border-t border-[var(--grey-line)]">
-      <div class="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-        <span>© 2026 AUREVIA CLOTHING. All Rights Reserved.</span>
-        <div class="flex items-center gap-3 opacity-70">
-          <span class="border border-gray-300 rounded px-2 py-0.5 text-[10px]">UPI</span>
-          <span class="border border-gray-300 rounded px-2 py-0.5 text-[10px]">CARDS</span>
-          <span class="border border-gray-300 rounded px-2 py-0.5 text-[10px]">NET BANKING</span>
-        </div>
-      </div>
-    </div>
+    <div class="border-t border-[#E4E3E0] py-5 text-center text-[11px] text-[#8A8783]">© 2026 AUREVIA CLOTHING. All Rights Reserved.</div>
   </footer>
+
 </div>
 
-<!-- ============================================================
-     Hamburger drawer (left)
-     ============================================================ -->
-<div id="drawerOverlay" class="overlay fixed inset-0 bg-black/40 z-[70]" onclick="AUREVIA.ui.closeDrawer()"></div>
-<div id="drawer" class="panel panel-left fixed top-0 left-0 h-full w-72 bg-white z-[80] p-6 flex flex-col">
-  <div class="flex items-center justify-between mb-8">
-    <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650" class="h-7 object-contain" alt="Aurevia">
-    <button onclick="AUREVIA.ui.closeDrawer()" aria-label="Close menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-  </div>
-  <nav class="flex flex-col gap-1 text-lg font-display">
-    <a href="#/home" onclick="AUREVIA.ui.closeDrawer()" class="py-3 border-b border-[var(--grey-line)]">Home</a>
-    <a href="#/products/all" onclick="AUREVIA.ui.closeDrawer()" class="py-3 border-b border-[var(--grey-line)]">Explore All Products</a>
-    <a href="#/about" onclick="AUREVIA.ui.closeDrawer()" class="py-3 border-b border-[var(--grey-line)]">About Us</a>
-  </nav>
-  <div class="mt-auto text-xs text-gray-400">
-    <button onclick="AUREVIA.auth.signOut()" class="underline">Sign out</button>
-  </div>
-</div>
-
-<!-- ============================================================
-     Search panel (right)
-     ============================================================ -->
-<div id="searchOverlay" class="overlay fixed inset-0 bg-black/40 z-[70]" onclick="AUREVIA.ui.closeSearch()"></div>
-<div id="searchPanel" class="panel fixed top-0 right-0 h-full w-full sm:w-96 bg-white z-[80] p-6 flex flex-col">
-  <div class="flex items-center gap-3 mb-6">
-    <input id="searchInput" oninput="AUREVIA.search.run(this.value)" type="text" placeholder="Search products, categories..." class="flex-1 border-b border-black py-2 outline-none text-lg font-display">
-    <button onclick="AUREVIA.ui.closeSearch()" aria-label="Close search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-  </div>
-  <div id="searchResults" class="flex-1 overflow-y-auto space-y-3"></div>
-</div>
-
-<!-- ============================================================
-     Cart drawer (right)
-     ============================================================ -->
-<div id="cartOverlay" class="overlay fixed inset-0 bg-black/40 z-[70]" onclick="AUREVIA.ui.closeCart()"></div>
-<div id="cartPanel" class="panel fixed top-0 right-0 h-full w-full sm:w-96 bg-white z-[80] flex flex-col">
-  <div class="flex items-center justify-between p-6 border-b border-[var(--grey-line)]">
-    <h3 class="font-display text-xl">Your Cart</h3>
-    <button onclick="AUREVIA.ui.closeCart()" aria-label="Close cart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-  </div>
-  <div id="cartItems" class="flex-1 overflow-y-auto p-6 space-y-5"></div>
-  <div class="p-6 border-t border-[var(--grey-line)]">
-    <div class="flex justify-between text-sm mb-4"><span>Subtotal</span><strong id="cartSubtotal">₹0</strong></div>
-    <button onclick="AUREVIA.ui.goToCartPage()" class="w-full btn-outline rounded-full py-3 text-sm mb-2">View Cart</button>
-    <button onclick="AUREVIA.checkout.buyCart()" class="w-full btn-solid rounded-full py-3 text-sm">Checkout</button>
-  </div>
-</div>
-
-<!-- ============================================================
-     Size guide popup
-     ============================================================ -->
-<div id="sizeGuideOverlay" class="overlay fixed inset-0 bg-black/60 z-[90] flex items-center justify-center px-4" onclick="AUREVIA.ui.closeSizeGuide(event)">
-  <div class="bg-white rounded-2xl max-w-md w-full p-5 relative" onclick="event.stopPropagation()">
-    <button onclick="AUREVIA.ui.closeSizeGuide()" class="absolute top-3 right-3" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-    <h3 class="font-display text-lg mb-3">Size Guide</h3>
-    <div class="relative overflow-hidden rounded-lg bg-[var(--grey)]" style="aspect-ratio:4/5;">
-      <img id="sizeGuideImg" class="w-full h-full object-contain gallery-slide" src="" alt="Size guide">
+<!-- SIZE GUIDE MODAL -->
+<div id="sizeguide-overlay" class="overlay-bg fixed inset-0 bg-black/60 z-[90] flex items-center justify-center px-4">
+  <div class="bg-white max-w-md w-full rounded-sm overflow-hidden">
+    <div class="flex items-center justify-between px-5 h-14 border-b border-[#E4E3E0]">
+      <span class="font-display">Size Guide</span>
+      <button id="btn-close-sizeguide" class="p-2" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
     </div>
-    <div class="flex justify-between mt-3">
-      <button onclick="AUREVIA.ui.sizeGuideNav(-1)" class="btn-outline rounded-full px-4 py-2 text-xs">← Prev</button>
-      <span id="sizeGuideCount" class="text-xs text-gray-500 self-center"></span>
-      <button onclick="AUREVIA.ui.sizeGuideNav(1)" class="btn-outline rounded-full px-4 py-2 text-xs">Next →</button>
+    <div class="relative">
+      <div class="aspect-[4/5] bg-[#F4F4F3]"><img id="sizeguide-img" class="w-full h-full object-contain" alt="Size guide"></div>
+      <button id="sg-prev" class="gallery-arrow left-2" aria-label="Previous">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button id="sg-next" class="gallery-arrow right-2" aria-label="Next">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
     </div>
+    <div class="text-center text-xs text-[#8A8783] py-3" id="sg-counter"></div>
   </div>
 </div>
 
-<!-- Toast -->
-<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-sm px-5 py-3 rounded-full z-[100] shadow-lg"></div>
+<!-- GOKWIK CHECKOUT PLACEHOLDER MODAL -->
+<div id="gokwik-overlay" class="overlay-bg fixed inset-0 bg-black/60 z-[95] flex items-center justify-center px-4">
+  <div class="bg-white max-w-sm w-full rounded-sm p-6" id="gokwik-modal-body"></div>
+</div>
 
 <script>
-/* ============================================================
-   AUREVIA CLOTHING — application script
-   Everything (state, routing, firebase, cart, rendering) lives
-   in this single module-scoped object to keep globals clean.
-   ============================================================ */
-const AUREVIA = (function(){
+/* =====================================================================
+   AUREVIA CLOTHING — single-file storefront
+   Sections:
+   1. Firebase init
+   2. Utilities (toast, currency, storage)
+   3. Product catalogue generator
+   4. Cart engine
+   5. Auth flows (Google / Facebook / Email / Phone OTP)
+   6. Router + page renderers
+   7. UI widgets (drawer, search, size guide, category tilt, GoKwik)
+   8. Boot
+===================================================================== */
 
-  /* ---------- Firebase ---------- */
-  const firebaseConfig = {
-    apiKey: "AIzaSyAZHTAqgm-NLw-IHLiyhqMEHVQNSCwHATA",
-    authDomain: "genz-food-login.firebaseapp.com",
-    projectId: "genz-food-login",
-    storageBucket: "genz-food-login.firebasestorage.app",
-    messagingSenderId: "729506686882",
-    appId: "1:729506686882:web:8e5029f9eaa9be085bb4fb",
-    measurementId: "G-X688SG8DB1"
-  };
+/* ---------------------------------------------------------------
+   1. FIREBASE INIT
+--------------------------------------------------------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyAZHTAqgm-NLw-IHLiyhqMEHVQNSCwHATA",
+  authDomain: "genz-food-login.firebaseapp.com",
+  projectId: "genz-food-login",
+  storageBucket: "genz-food-login.firebasestorage.app",
+  messagingSenderId: "729506686882",
+  appId: "1:729506686882:web:8e5029f9eaa9be085bb4fb",
+  measurementId: "G-X688SG8DB1"
+};
+
+let auth, db, firebaseReady = false;
+try{
   firebase.initializeApp(firebaseConfig);
-  const fbAuth = firebase.auth();
-  const db = firebase.firestore();
+  auth = firebase.auth();
+  db = firebase.firestore();
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+  firebaseReady = true;
+}catch(e){
+  console.error("Firebase failed to initialize:", e);
+}
 
-  /* ---------- Constants / placeholders ---------- */
-  const SIZE_GUIDE_IMAGES = [
-    "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/13A9F1CC-690A-4624-BACF-00C9362D4663.png?v=1785590678",
-    "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1665.jpg?v=1785590762",
-    "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1666.jpg?v=1785590762",
-    "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1665.jpg?v=1785590762",
-    "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1667.jpg?v=1785590762"
-  ];
-  const SIZES = ["S-36","M-38","L-40","XL-42","XXL-44","XXXL-46"];
-  const CATEGORIES = ["SHIRTS","JEANS","HOODIES","JACKETS","SHOES","GYM ACCESSORIES"];
-  const HERO_IMG = "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1663.jpg?v=1785589886";
-  const EOS_BANNER = "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1592.png?v=1785393299";
-  const LOGO = "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650";
+/* ---------------------------------------------------------------
+   2. UTILITIES
+--------------------------------------------------------------- */
+function toast(msg){
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s ease'; setTimeout(()=>el.remove(),300); }, 2200);
+}
+function inr(n){ return '₹' + Number(n).toLocaleString('en-IN'); }
+function qs(sel, ctx=document){ return ctx.querySelector(sel); }
+function qsa(sel, ctx=document){ return Array.from(ctx.querySelectorAll(sel)); }
+function setError(container, msg){
+  const el = document.getElementById(container);
+  if(!msg){ el.classList.add('hidden'); el.textContent=''; return; }
+  el.textContent = msg; el.classList.remove('hidden');
+}
+function friendlyAuthError(err){
+  const map = {
+    'auth/invalid-email':'That email address looks invalid.',
+    'auth/user-not-found':'No account found with that email.',
+    'auth/wrong-password':'Incorrect password. Please try again.',
+    'auth/email-already-in-use':'An account already exists with this email.',
+    'auth/weak-password':'Password should be at least 6 characters.',
+    'auth/popup-closed-by-user':'Sign-in popup was closed before completing.',
+    'auth/invalid-phone-number':'Please enter a valid phone number with country code.',
+    'auth/invalid-verification-code':'That OTP code is incorrect.',
+    'auth/code-expired':'That OTP has expired. Please request a new one.',
+    'auth/too-many-requests':'Too many attempts. Please try again later.',
+    'auth/network-request-failed':'Network error. Check your connection and try again.',
+    'auth/operation-not-allowed':'This sign-in method is not enabled for this project yet.',
+    'auth/unauthorized-domain':'This domain is not authorized in Firebase for sign-in.'
+  };
+  return (err && map[err.code]) || (err && err.message) || 'Something went wrong. Please try again.';
+}
 
-  const ADJ = ["Classic","Signature","Heritage","Urban","Essential","Element","Motion","Studio","Onyx","Ivory","Prime","Origin","Flux","Core","Apex"];
+/* ---------------------------------------------------------------
+   3. PRODUCT CATALOGUE — generated so 223 real, browsable
+      products exist without hand-writing each one.
+--------------------------------------------------------------- */
+const CATEGORIES = [
+  { key:'shirts', label:'Shirts', count:33 },
+  { key:'jeans', label:'Jeans', count:33 },
+  { key:'hoodies', label:'Hoodies', count:33 },
+  { key:'jackets', label:'Jackets', count:33 },
+  { key:'shoes', label:'Shoes', count:33 },
+  { key:'gym-accessories', label:'Gym Accessories', count:33 },
+];
+const SIZES = ['S-36','M-38','L-40','XL-42','XXL-44','XXXL-46'];
 
-  /* ---------- Generate placeholder product catalog (223 products) ----------
-     33 products per category x 6 categories = 198
-     + 25 "End Of Season Sale" products
-     Image count per product varies (2 or 3) — never hardcoded. */
-  function makeProduct(id, category, idx){
-    const name = `${ADJ[idx % ADJ.length]} ${category.charAt(0)+category.slice(1).toLowerCase()} ${idx+1}`;
-    const imgCount = 2 + (idx % 2); // alternates 2,3 images
-    const images = [];
-    for(let i=0;i<imgCount;i++){
-      images.push(`https://picsum.photos/seed/aurevia-${id}-${i}/900/1125`);
-    }
-    const basePrice = 799 + (idx % 12) * 150;
-    return {
-      id, name, category,
-      price: basePrice,
-      images,
-      description: `${name} — crafted for AUREVIA CLOTHING with premium fabric, a considered fit and everyday comfort. Part of our ${category.toLowerCase()} collection. Replace this placeholder description with your final product copy.`
-    };
-  }
+const NAME_WORDS = {
+  shirts:['Oxford','Linen','Signature','Tailored','Classic','Slim-Fit','Heritage','Poplin','Studio','Essential'],
+  jeans:['Slim Taper','Straight Cut','Relaxed Fit','Vintage Wash','Stretch','Raw Denim','Skinny','Bootcut','Selvedge','Distressed'],
+  hoodies:['Fleece','Overhead','Oversized','Classic','Sport','Zip-Through','Heavyweight','Essential','Graphic','Boxy'],
+  jackets:['Bomber','Windbreaker','Puffer','Denim','Trucker','Varsity','Quilted','Shell','Field','Overshirt'],
+  shoes:['Runner','Court','Trainer','Street','Trail','Classic','Lite','Pro','Grip','Edge'],
+  'gym-accessories':['Training','Compression','Performance','Flex','Core','Grip','Pro','Active','Endurance','Motion'],
+};
+const NOUN = {
+  shirts:'Shirt', jeans:'Jeans', hoodies:'Hoodie', jackets:'Jacket', shoes:'Shoes', 'gym-accessories':'Gear'
+};
+const DESC = {
+  shirts:'Crafted from breathable premium fabric with a refined silhouette — built for all-day comfort and a sharp, elevated look.',
+  jeans:'Precision-cut denim with just the right stretch, designed to move with you while holding a clean, tailored shape.',
+  hoodies:'Soft heavyweight fleece with a relaxed drape — the everyday layer for off-duty ease and understated style.',
+  jackets:'A structured outer layer balancing warmth and weight, finished with premium hardware and a modern cut.',
+  shoes:'Engineered for comfort and grip, with a minimal upper and cushioned sole built for everyday performance.',
+  'gym-accessories':'Performance-grade gear designed to support intensity in training, built to last through every session.',
+};
 
-  const PRODUCTS = [];
-  let pid = 1;
+function seedImg(seed, w, h){ return `https://picsum.photos/seed/${seed}/${w}/${h}`; }
+
+function buildCatalogue(){
+  const products = [];
+  let idCounter = 1;
   CATEGORIES.forEach(cat=>{
-    for(let i=0;i<33;i++){ PRODUCTS.push(makeProduct(pid++, cat, i)); }
-  });
-  for(let i=0;i<25;i++){ PRODUCTS.push(makeProduct(pid++, "END OF SEASON SALE", i)); }
-
-  function fmtPrice(n){ return "₹" + n.toLocaleString("en-IN"); }
-  function productById(id){ return PRODUCTS.find(p=>String(p.id)===String(id)); }
-
-  /* ---------- Cart state ---------- */
-  let cart = JSON.parse(localStorage.getItem("aurevia_cart") || "[]");
-  function saveCart(){
-    localStorage.setItem("aurevia_cart", JSON.stringify(cart));
-    renderCart();
-    syncCartToFirestore();
-  }
-  function syncCartToFirestore(){
-    const user = fbAuth.currentUser;
-    if(!user) return;
-    db.collection("cart").doc(user.uid).set({ items: cart, updatedAt: Date.now() }).catch(()=>{});
-  }
-  function addToCart(productId, size, qty){
-    qty = qty || 1;
-    const existing = cart.find(c=>c.id===productId && c.size===size);
-    if(existing){ existing.qty += qty; } else { cart.push({id:productId, size, qty}); }
-    saveCart();
-    showToast("Added to cart");
-    document.getElementById("cartBadge").classList.remove("hide");
-  }
-  function removeFromCart(productId, size){
-    cart = cart.filter(c=>!(c.id===productId && c.size===size));
-    saveCart();
-  }
-  function changeQty(productId, size, delta){
-    const item = cart.find(c=>c.id===productId && c.size===size);
-    if(!item) return;
-    item.qty += delta;
-    if(item.qty<=0){ removeFromCart(productId,size); return; }
-    saveCart();
-  }
-  function cartTotal(){
-    return cart.reduce((sum,c)=>{ const p=productById(c.id); return sum + (p? p.price*c.qty:0); },0);
-  }
-  function cartCount(){ return cart.reduce((s,c)=>s+c.qty,0); }
-
-  function renderCart(){
-    const wrap = document.getElementById("cartItems");
-    const badge = document.getElementById("cartBadge");
-    const count = cartCount();
-    badge.textContent = count;
-    badge.classList.toggle("hide", count===0);
-    document.getElementById("cartSubtotal").textContent = fmtPrice(cartTotal());
-    if(cart.length===0){
-      wrap.innerHTML = `<p class="text-sm text-gray-400 text-center mt-10">Your cart is empty.</p>`;
-      return;
-    }
-    wrap.innerHTML = cart.map(c=>{
-      const p = productById(c.id);
-      if(!p) return "";
-      return `<div class="flex gap-3">
-        <img src="${p.images[0]}" class="w-16 h-20 object-cover rounded-lg bg-[var(--grey)]">
-        <div class="flex-1">
-          <p class="text-sm font-medium leading-tight">${p.name}</p>
-          <p class="text-xs text-gray-500 mb-1">Size: ${c.size}</p>
-          <div class="flex items-center gap-2">
-            <button onclick="AUREVIA.cart.changeQty(${p.id},'${c.size}',-1)" class="w-6 h-6 border rounded-full text-xs">−</button>
-            <span class="text-xs">${c.qty}</span>
-            <button onclick="AUREVIA.cart.changeQty(${p.id},'${c.size}',1)" class="w-6 h-6 border rounded-full text-xs">+</button>
-            <button onclick="AUREVIA.cart.remove(${p.id},'${c.size}')" class="text-[11px] text-gray-400 underline ml-2">Remove</button>
-          </div>
-        </div>
-        <div class="text-sm font-medium">${fmtPrice(p.price*c.qty)}</div>
-      </div>`;
-    }).join("");
-  }
-
-  /* ---------- Toast ---------- */
-  let toastTimer;
-  function showToast(msg){
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=>t.classList.remove("show"), 2200);
-  }
-
-  /* ---------- UI: drawer / search / cart / size guide ---------- */
-  function toggle(panelId, overlayId, open){
-    document.getElementById(panelId).classList.toggle("open", open);
-    document.getElementById(overlayId).classList.toggle("open", open);
-  }
-  const ui = {
-    openDrawer(){ toggle("drawer","drawerOverlay",true); },
-    closeDrawer(){ toggle("drawer","drawerOverlay",false); },
-    openSearch(){ toggle("searchPanel","searchOverlay",true); document.getElementById("searchInput").focus(); search.run(""); },
-    closeSearch(){ toggle("searchPanel","searchOverlay",false); },
-    openCart(){ renderCart(); toggle("cartPanel","cartOverlay",true); },
-    closeCart(){ toggle("cartPanel","cartOverlay",false); },
-    goToCartPage(){ ui.closeCart(); location.hash = "#/cart"; },
-    showEmailLogin(){ document.getElementById("loginOptions").classList.add("hide"); document.getElementById("emailLoginForm").classList.remove("hide"); document.getElementById("phoneLoginForm").classList.add("hide"); },
-    showPhoneLogin(){ document.getElementById("loginOptions").classList.add("hide"); document.getElementById("phoneLoginForm").classList.remove("hide"); document.getElementById("emailLoginForm").classList.add("hide"); },
-    showLoginOptions(){ document.getElementById("loginOptions").classList.remove("hide"); document.getElementById("emailLoginForm").classList.add("hide"); document.getElementById("phoneLoginForm").classList.add("hide"); document.getElementById("loginError").classList.add("hide"); },
-    loginErr(msg){ const e=document.getElementById("loginError"); e.textContent = msg; e.classList.remove("hide"); },
-    // size guide
-    _sgIndex: 0,
-    openSizeGuide(){ ui._sgIndex = 0; ui._renderSizeGuide(); toggle("sizeGuideOverlay",null,true); document.getElementById("sizeGuideOverlay").classList.add("open"); },
-    closeSizeGuide(e){ if(e && e.target.id !== "sizeGuideOverlay") return; document.getElementById("sizeGuideOverlay").classList.remove("open"); },
-    sizeGuideNav(dir){ ui._sgIndex = (ui._sgIndex + dir + SIZE_GUIDE_IMAGES.length) % SIZE_GUIDE_IMAGES.length; ui._renderSizeGuide(); },
-    _renderSizeGuide(){
-      document.getElementById("sizeGuideImg").src = SIZE_GUIDE_IMAGES[ui._sgIndex];
-      document.getElementById("sizeGuideCount").textContent = (ui._sgIndex+1)+" / "+SIZE_GUIDE_IMAGES.length;
-    }
-  };
-  // fix openSizeGuide overlay toggle (no matching panel, just overlay+modal itself)
-  ui.openSizeGuide = function(){
-    ui._sgIndex = 0; ui._renderSizeGuide();
-    document.getElementById("sizeGuideOverlay").classList.add("open");
-  };
-  ui.closeSizeGuide = function(e){
-    if(e && e.target && e.target.id !== "sizeGuideOverlay") return;
-    document.getElementById("sizeGuideOverlay").classList.remove("open");
-  };
-
-  /* ---------- Search ---------- */
-  const search = {
-    run(q){
-      q = (q||"").trim().toLowerCase();
-      const box = document.getElementById("searchResults");
-      if(!q){ box.innerHTML = `<p class="text-xs text-gray-400">Start typing to search ${PRODUCTS.length} products, categories & pages…</p>`; return; }
-      const pages = [
-        {name:"About Us", hash:"#/about"},{name:"Contact Us", hash:"#/contact"},
-        {name:"Terms of Service", hash:"#/terms"},{name:"Privacy Policy", hash:"#/privacy"},
-        {name:"Shipping Policy", hash:"#/shipping"},{name:"Return Policy", hash:"#/return"}
-      ].filter(p=>p.name.toLowerCase().includes(q));
-      const cats = CATEGORIES.filter(c=>c.toLowerCase().includes(q));
-      const prods = PRODUCTS.filter(p=>p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)).slice(0,20);
-      let html = "";
-      cats.forEach(c=> html += `<a href="#/products/${encodeURIComponent(c)}" onclick="AUREVIA.ui.closeSearch()" class="block text-sm py-2 border-b border-[var(--grey-line)]">📁 ${c}</a>`);
-      pages.forEach(p=> html += `<a href="${p.hash}" onclick="AUREVIA.ui.closeSearch()" class="block text-sm py-2 border-b border-[var(--grey-line)]">📄 ${p.name}</a>`);
-      prods.forEach(p=> html += `<a href="#/product/${p.id}" onclick="AUREVIA.ui.closeSearch()" class="flex items-center gap-3 py-2 border-b border-[var(--grey-line)]">
-          <img src="${p.images[0]}" class="w-10 h-12 object-cover rounded bg-[var(--grey)]"><span class="text-sm">${p.name}<br><span class="text-xs text-gray-400">${fmtPrice(p.price)}</span></span></a>`);
-      box.innerHTML = html || `<p class="text-xs text-gray-400">No results for “${q}”.</p>`;
-    }
-  };
-
-  /* ---------- GoKwik checkout placeholder ---------- */
-  const checkout = {
-    /* Integration point: replace this function body with the official
-       GoKwik SDK call. Kept isolated so no secret keys are ever needed
-       client-side — GoKwik order creation should happen on your backend. */
-    openGoKwik(order){
-      return new Promise(resolve=>{
-        showToast("Redirecting to GoKwik Checkout…");
-        setTimeout(()=>{
-          // Simulated success callback from GoKwik. In production this
-          // resolves from GoKwik's postMessage / redirect callback.
-          resolve({status:"success", gokwikOrderId:"GK"+Date.now()});
-        }, 1400);
+    for(let i=1;i<=cat.count;i++){
+      const words = NAME_WORDS[cat.key];
+      const word = words[i % words.length];
+      const name = `${word} ${NOUN[cat.key]} ${String(i).padStart(2,'0')}`;
+      const imgCount = 2 + (i % 3); // 2, 3 or 4 images — dynamic, not hardcoded
+      const images = [];
+      for(let n=1;n<=imgCount;n++){ images.push(seedImg(`${cat.key}-${i}-${n}`, 700, 933)); }
+      const price = 1499 + ((i * 137 + cat.key.length*211) % 3500);
+      products.push({
+        id:'p'+idCounter++,
+        name, category:cat.key, categoryLabel:cat.label,
+        price, mrp: price + 400 + (i%5)*100,
+        images, description: DESC[cat.key],
+        sale:false
       });
-    },
-    async buyNow(productId, size){
-      if(!size){ showToast("Please select a size"); return; }
-      const p = productById(productId);
-      const order = { items:[{id:p.id, name:p.name, size, qty:1, price:p.price}], amount:p.price };
-      await checkout._process(order);
-    },
-    async buyCart(){
-      if(cart.length===0){ showToast("Your cart is empty"); return; }
-      const items = cart.map(c=>{ const p=productById(c.id); return {id:p.id,name:p.name,size:c.size,qty:c.qty,price:p.price}; });
-      const order = { items, amount: cartTotal() };
-      await checkout._process(order);
-    },
-    async _process(order){
-      const result = await checkout.openGoKwik(order);
-      if(result.status === "success"){
-        const user = fbAuth.currentUser;
-        const record = { ...order, gokwikOrderId: result.gokwikOrderId, uid: user? user.uid: "guest", createdAt: Date.now(), paymentStatus:"paid" };
-        try{
-          await db.collection("orders").add(record);
-          await db.collection("payments").add({ orderRef: result.gokwikOrderId, amount: order.amount, status:"success", uid: user? user.uid:"guest", createdAt: Date.now() });
-        }catch(e){ /* Firestore optional in dev — proceed regardless */ }
-        cart = []; saveCart();
-        router.go("#/order-success", { orderId: result.gokwikOrderId, amount: order.amount });
-      } else {
-        showToast("Payment failed. Please try again.");
-      }
-    }
-  };
-
-  /* ---------- Auth ---------- */
-  let confirmationResult = null;
-  const auth = {
-    google(){
-      const provider = new firebase.auth.GoogleAuthProvider();
-      fbAuth.signInWithPopup(provider).catch(e=> ui.loginErr(e.message));
-    },
-    facebook(){
-      const provider = new firebase.auth.FacebookAuthProvider();
-      fbAuth.signInWithPopup(provider).catch(e=> ui.loginErr(e.message));
-    },
-    emailSignIn(){
-      const email = document.getElementById("emailInput").value.trim();
-      const pass = document.getElementById("passInput").value;
-      fbAuth.signInWithEmailAndPassword(email,pass).catch(e=> ui.loginErr(e.message));
-    },
-    emailSignUp(){
-      const email = document.getElementById("emailInput").value.trim();
-      const pass = document.getElementById("passInput").value;
-      fbAuth.createUserWithEmailAndPassword(email,pass).catch(e=> ui.loginErr(e.message));
-    },
-    sendOtp(){
-      const phone = document.getElementById("phoneInput").value.trim();
-      if(!window.recaptchaVerifier){
-        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", { size:"invisible" }, fbAuth);
-      }
-      fbAuth.signInWithPhoneNumber(phone, window.recaptchaVerifier).then(res=>{
-        confirmationResult = res;
-        document.getElementById("otpStep").classList.remove("hide");
-        showToast("OTP sent");
-      }).catch(e=> ui.loginErr(e.message));
-    },
-    verifyOtp(){
-      const code = document.getElementById("otpInput").value.trim();
-      if(!confirmationResult){ ui.loginErr("Please request an OTP first."); return; }
-      confirmationResult.confirm(code).catch(e=> ui.loginErr(e.message));
-    },
-    signOut(){ fbAuth.signOut(); }
-  };
-
-  fbAuth.onAuthStateChanged(user=>{
-    const gate = document.getElementById("loginGate");
-    const app = document.getElementById("app");
-    if(user){
-      gate.classList.add("hide");
-      app.classList.remove("hide");
-      db.collection("users").doc(user.uid).set({
-        uid:user.uid, email:user.email||null, phone:user.phoneNumber||null,
-        lastLogin: Date.now()
-      }, {merge:true}).catch(()=>{});
-      // pull cloud cart if local is empty
-      if(cart.length===0){
-        db.collection("cart").doc(user.uid).get().then(doc=>{
-          if(doc.exists && doc.data().items){ cart = doc.data().items; saveCart(); }
-        }).catch(()=>{});
-      }
-      if(!location.hash) location.hash = "#/home";
-      router.render();
-    } else {
-      gate.classList.remove("hide");
-      app.classList.add("hide");
-      ui.showLoginOptions();
     }
   });
-
-  /* ============================================================
-     ROUTER + PAGE RENDERERS
-     ============================================================ */
-  function productCard(p){
-    return `<a href="#/product/${p.id}" class="group block">
-      <div class="relative overflow-hidden rounded-xl bg-[var(--grey)]" style="aspect-ratio:4/5;">
-        <img src="${p.images[0]}" alt="${p.name}" loading="lazy" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
-      </div>
-      <p class="mt-3 text-sm font-medium leading-tight">${p.name}</p>
-      <p class="text-sm text-gray-500">${fmtPrice(p.price)}</p>
-    </a>`;
-  }
-
-  function productGrid(list){
-    return `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10">${list.map(productCard).join("")}</div>`;
-  }
-
-  const pages = {
-    home(){
-      const catCardsHtml = CATEGORIES.map((c,i)=>`
-        <a href="#/products/${encodeURIComponent(c)}" class="cat-card block" data-tilt>
-          <div class="cat-card-inner relative overflow-hidden rounded-2xl bg-[var(--grey)]" style="aspect-ratio:3/4;">
-            <img src="https://picsum.photos/seed/aurevia-cat-${i}/700/900" alt="${c}" class="w-full h-full object-cover">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent"></div>
-            <span class="absolute bottom-4 left-4 text-white font-display text-lg tracking-wide">${c}</span>
-          </div>
-        </a>`).join("");
-
-      return `
-      <section class="relative">
-        <div class="relative w-full overflow-hidden" style="aspect-ratio:16/9;max-height:78vh;">
-          <img src="${HERO_IMG}" alt="Aurevia hero" class="w-full h-full object-cover">
-          <div class="absolute inset-0 bg-black/20 flex items-end justify-center pb-14">
-            <a href="#/products/all" class="btn-solid rounded-full px-8 py-3 text-sm tracking-wide font-medium">EXPLORE NOW</a>
-          </div>
-        </div>
-      </section>
-
-      <section class="max-w-7xl mx-auto px-6 py-16">
-        <h2 class="font-display text-2xl sm:text-3xl text-center mb-10">EXPLORE CATEGORIES</h2>
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-5">${catCardsHtml}</div>
-      </section>
-
-      <div class="bg-[var(--red)] text-white py-2.5 overflow-hidden">
-        <div class="marquee-track font-medium text-sm tracking-wide">
-          ${Array(2).fill('<span class="px-8">ALL OVER INDIA DELIVERY AVAILABLE&nbsp; | &nbsp;FREE SHIPPING ABOVE ₹999 ORDERS&nbsp; | &nbsp;100% TRUSTED</span>').join('')}
-        </div>
-      </div>
-
-      <section class="max-w-7xl mx-auto px-6 py-16">
-        <a href="#/products/END%20OF%20SEASON%20SALE" class="block relative overflow-hidden rounded-2xl">
-          <img src="${EOS_BANNER}" alt="End of Season Sale" class="w-full object-cover" style="max-height:420px;">
-        </a>
-      </section>
-
-      <section class="max-w-7xl mx-auto px-6 py-16">
-        <h2 class="font-display text-2xl sm:text-3xl mb-4">OUR JOURNEY</h2>
-        <p class="text-gray-600 leading-relaxed max-w-2xl">Every great brand starts with a vision. This section represents the journey, passion and values behind AUREVIA CLOTHING. Replace this text with your original brand story.</p>
-      </section>
-
-      <section class="max-w-7xl mx-auto px-6 pb-20">
-        <div class="flex items-center justify-between mb-8">
-          <h2 class="font-display text-2xl">New Arrivals</h2>
-          <a href="#/products/all" class="text-sm underline">View all →</a>
-        </div>
-        ${productGrid(PRODUCTS.slice(0,8))}
-      </section>`;
-    },
-
-    productsList(categoryParam){
-      const isAll = categoryParam === "all";
-      const cat = decodeURIComponent(categoryParam||"");
-      const list = isAll ? PRODUCTS : PRODUCTS.filter(p=>p.category===cat);
-      const title = isAll ? "All Products" : cat;
-      return `
-      <section class="max-w-7xl mx-auto px-6 py-12">
-        <h1 class="font-display text-3xl mb-2">${title}</h1>
-        <p class="text-sm text-gray-500 mb-10">${list.length} products</p>
-        ${productGrid(list)}
-      </section>`;
-    },
-
-    productDetail(id){
-      const p = productById(id);
-      if(!p) return `<div class="max-w-xl mx-auto px-6 py-20 text-center">Product not found.</div>`;
-      return `
-      <section class="max-w-6xl mx-auto px-6 py-10 grid md:grid-cols-2 gap-10">
-        <div>
-          <div class="relative overflow-hidden rounded-2xl bg-[var(--grey)]" style="aspect-ratio:4/5;">
-            ${p.images.map((img,i)=>`<img data-idx="${i}" src="${img}" class="gallery-slide absolute inset-0 w-full h-full object-cover ${i===0?'':'hide'}">`).join("")}
-            ${p.images.length>1?`
-            <button onclick="AUREVIA.gallery.nav(-1)" class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center">‹</button>
-            <button onclick="AUREVIA.gallery.nav(1)" class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center">›</button>
-            `:""}
-          </div>
-          ${p.images.length>1?`<div class="flex gap-2 mt-3">${p.images.map((img,i)=>`<img src="${img}" onclick="AUREVIA.gallery.set(${i})" class="w-14 h-16 object-cover rounded-lg cursor-pointer bg-[var(--grey)] ${i===0?'ring-2 ring-black':''}">`).join("")}</div>`:""}
-        </div>
-        <div>
-          <p class="text-xs tracking-widest text-gray-400 uppercase mb-2">${p.category}</p>
-          <h1 class="font-display text-2xl mb-2">${p.name}</h1>
-          <p class="text-xl font-medium mb-4">${fmtPrice(p.price)}</p>
-          <button onclick="AUREVIA.ui.openSizeGuide()" class="text-xs underline text-gray-500 mb-6">Size Guide</button>
-          <p class="text-sm text-gray-600 leading-relaxed mb-6">${p.description}</p>
-
-          <p class="text-xs tracking-wide uppercase text-gray-500 mb-2">Select Size</p>
-          <div id="sizeSelector" class="flex flex-wrap gap-2 mb-6">
-            ${SIZES.map(s=>`<button onclick="AUREVIA.product.selectSize('${s}',this)" class="size-pill px-4 py-2 rounded-full text-xs">${s}</button>`).join("")}
-          </div>
-
-          <div class="flex gap-3">
-            <button onclick="AUREVIA.product.addToCart(${p.id})" class="flex-1 btn-outline rounded-full py-3 text-sm">ADD TO CART</button>
-            <button onclick="AUREVIA.product.buyNow(${p.id})" class="flex-1 btn-solid rounded-full py-3 text-sm">BUY NOW</button>
-          </div>
-        </div>
-      </section>`;
-    },
-
-    cartPage(){
-      if(cart.length===0){
-        return `<div class="max-w-xl mx-auto px-6 py-24 text-center">
-          <p class="text-gray-500 mb-6">Your cart is empty.</p>
-          <a href="#/products/all" class="btn-solid rounded-full px-6 py-3 text-sm">Continue Shopping</a>
-        </div>`;
-      }
-      const rows = cart.map(c=>{
-        const p = productById(c.id);
-        return `<div class="flex gap-4 items-center border-b border-[var(--grey-line)] py-4">
-          <img src="${p.images[0]}" class="w-20 h-24 object-cover rounded-lg bg-[var(--grey)]">
-          <div class="flex-1">
-            <p class="font-medium text-sm">${p.name}</p>
-            <p class="text-xs text-gray-500">Size: ${c.size}</p>
-            <div class="flex items-center gap-2 mt-2">
-              <button onclick="AUREVIA.cart.changeQty(${p.id},'${c.size}',-1)" class="w-7 h-7 border rounded-full text-xs">−</button>
-              <span class="text-xs">${c.qty}</span>
-              <button onclick="AUREVIA.cart.changeQty(${p.id},'${c.size}',1)" class="w-7 h-7 border rounded-full text-xs">+</button>
-              <button onclick="AUREVIA.cart.remove(${p.id},'${c.size}')" class="text-[11px] text-gray-400 underline ml-3">Remove</button>
-            </div>
-          </div>
-          <div class="text-sm font-medium">${fmtPrice(p.price*c.qty)}</div>
-        </div>`;
-      }).join("");
-      return `<section class="max-w-3xl mx-auto px-6 py-12">
-        <h1 class="font-display text-2xl mb-8">Your Cart</h1>
-        ${rows}
-        <div class="flex justify-between items-center mt-8">
-          <span class="text-lg font-medium">Subtotal</span>
-          <span class="text-lg font-medium">${fmtPrice(cartTotal())}</span>
-        </div>
-        <button onclick="AUREVIA.checkout.buyCart()" class="w-full btn-solid rounded-full py-4 mt-6 text-sm">PROCEED TO CHECKOUT</button>
-      </section>`;
-    },
-
-    orderSuccess(params){
-      return `<section class="max-w-lg mx-auto px-6 py-24 text-center">
-        <div class="w-16 h-16 rounded-full bg-black text-white flex items-center justify-center mx-auto mb-6 text-2xl">✓</div>
-        <h1 class="font-display text-2xl mb-3">Order Placed</h1>
-        <p class="text-gray-500 text-sm mb-1">Order ID: ${params.orderId||"—"}</p>
-        <p class="text-gray-500 text-sm mb-8">Amount Paid: ${fmtPrice(params.amount||0)}</p>
-        <a href="#/products/all" class="btn-solid rounded-full px-6 py-3 text-sm">Continue Shopping</a>
-      </section>`;
-    },
-
-    about(){
-      return `<section class="max-w-3xl mx-auto px-6 py-16">
-        <h1 class="font-display text-3xl mb-8">About Us</h1>
-        <div class="space-y-4 text-gray-700 leading-relaxed">
-          <p>Welcome to AUREVIA CLOTHING – your ultimate destination for premium sports jerseys and stylish apparel.</p>
-          <p>AUREVIA CLOTHING was created with a vision to provide high-quality, affordable, and trendy apparel for true fashion lovers across India.</p>
-          <p>We focus on delivering premium designs, comfortable fabric, and the latest collections inspired by modern trends.</p>
-          <p>Our goal is simple – to bring you the best combination of style, quality, and value.</p>
-          <h3 class="font-display text-xl pt-4">Why Choose AUREVIA CLOTHING?</h3>
-          <ul class="list-disc pl-5 space-y-1">
-            <li>Premium Quality Products</li><li>Affordable Pricing</li><li>PAN India Delivery</li><li>Trusted Service</li>
-          </ul>
-          <p>We are passionate about fashion and aim to deliver products that represent your personality.</p>
-          <h3 class="font-display text-xl pt-4">Contact Details</h3>
-          <p>Name: UMER BUNIYAD TAKILDAR<br>Phone: 7385009275<br>Address: Darga Galli Ajara, Kolhapur, Maharashtra</p>
-        </div>
-      </section>`;
-    },
-    contact(){
-      return `<section class="max-w-xl mx-auto px-6 py-16">
-        <h1 class="font-display text-3xl mb-8">Contact Us</h1>
-        <p class="text-gray-700">UMER BUNIYAD TAKILDAR</p>
-        <p class="text-gray-700">Phone: <a class="underline" href="tel:+917385009275">7385009275</a></p>
-        <p class="text-gray-700">Address: Darga Galli Ajara, Kolhapur, Maharashtra</p>
-        <p class="text-gray-700 mt-4">Instagram: <a class="underline" href="https://instagram.com/um3rx70" target="_blank">um3rx70</a></p>
-      </section>`;
-    },
-    legal(title, body){
-      return `<section class="max-w-2xl mx-auto px-6 py-16">
-        <h1 class="font-display text-3xl mb-6">${title}</h1>
-        <p class="text-gray-600 leading-relaxed">${body}</p>
-      </section>`;
-    }
-  };
-
-  /* ---------- Gallery nav on product page ---------- */
-  const gallery = {
-    idx: 0,
-    set(i){
-      const slides = document.querySelectorAll(".gallery-slide");
-      slides.forEach(s=> s.classList.toggle("hide", Number(s.dataset.idx)!==i));
-      document.querySelectorAll("[onclick^='AUREVIA.gallery.set']").forEach((el,ei)=> el.classList.toggle("ring-2", ei===i));
-      gallery.idx = i;
-    },
-    nav(dir){
-      const slides = document.querySelectorAll(".gallery-slide");
-      const n = slides.length;
-      gallery.set((gallery.idx + dir + n) % n);
-    }
-  };
-
-  /* ---------- Product page interactions ---------- */
-  const product = {
-    selectedSize: null,
-    selectSize(s, el){
-      product.selectedSize = s;
-      document.querySelectorAll("#sizeSelector .size-pill").forEach(b=>b.classList.remove("selected"));
-      el.classList.add("selected");
-    },
-    addToCart(id){
-      if(!product.selectedSize){ showToast("Please select a size"); return; }
-      addToCart(id, product.selectedSize, 1);
-    },
-    buyNow(id){
-      if(!product.selectedSize){ showToast("Please select a size"); return; }
-      checkout.buyNow(id, product.selectedSize);
-    }
-  };
-
-  /* ---------- 3D tilt for category cards ---------- */
-  function bindTilt(){
-    document.querySelectorAll(".cat-card").forEach(card=>{
-      const inner = card.querySelector(".cat-card-inner");
-      card.addEventListener("mousemove", e=>{
-        const r = card.getBoundingClientRect();
-        const x = (e.clientX - r.left)/r.width - .5;
-        const y = (e.clientY - r.top)/r.height - .5;
-        inner.style.transform = `rotateY(${x*10}deg) rotateX(${-y*10}deg) scale(1.02)`;
-      });
-      card.addEventListener("mouseleave", ()=>{ inner.style.transform = "rotateY(0) rotateX(0) scale(1)"; });
-      let touchStartX=0;
-      card.addEventListener("touchstart", e=>{ touchStartX = e.touches[0].clientX; }, {passive:true});
-      card.addEventListener("touchmove", e=>{
-        const dx = e.touches[0].clientX - touchStartX;
-        inner.style.transform = `rotateY(${dx/12}deg) scale(1.02)`;
-      }, {passive:true});
-      card.addEventListener("touchend", ()=>{ inner.style.transform = "rotateY(0) scale(1)"; });
+  // END OF SEASON SALE — 25 products
+  for(let i=1;i<=25;i++){
+    const catPool = CATEGORIES[i % CATEGORIES.length];
+    const words = NAME_WORDS[catPool.key];
+    const word = words[i % words.length];
+    const imgCount = 2 + (i % 3);
+    const images = [];
+    for(let n=1;n<=imgCount;n++){ images.push(seedImg(`sale-${i}-${n}`, 700, 933)); }
+    const mrp = 1999 + (i*97 % 3000);
+    products.push({
+      id:'p'+idCounter++,
+      name:`${word} ${NOUN[catPool.key]} Sale ${String(i).padStart(2,'0')}`,
+      category:'sale', categoryLabel:'End of Season Sale',
+      price: Math.round(mrp * 0.6), mrp,
+      images, description: DESC[catPool.key],
+      sale:true
     });
   }
+  return products;
+}
+const PRODUCTS = buildCatalogue();
+const PRODUCT_BY_ID = Object.fromEntries(PRODUCTS.map(p=>[p.id,p]));
 
-  /* ---------- swipe for product gallery ---------- */
-  function bindGallerySwipe(){
-    const box = document.querySelector("main");
-    let startX = null;
-    box.addEventListener("touchstart", e=>{
-      if(e.target.closest(".gallery-slide") || e.target.closest("[data-idx]")) startX = e.touches[0].clientX;
-    }, {passive:true});
-    box.addEventListener("touchend", e=>{
-      if(startX===null) return;
-      const dx = e.changedTouches[0].clientX - startX;
-      if(Math.abs(dx) > 40) gallery.nav(dx>0?-1:1);
-      startX = null;
-    }, {passive:true});
+/* ---------------------------------------------------------------
+   4. CART ENGINE — localStorage-backed, mirrored to Firestore
+--------------------------------------------------------------- */
+const CART_KEY = 'aurevia_cart_v1';
+function getCart(){
+  try{ return JSON.parse(localStorage.getItem(CART_KEY)) || []; }catch(e){ return []; }
+}
+function saveCart(cart){
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  renderCartCount();
+  renderCartDrawer();
+  syncCartToFirestore(cart);
+}
+function addToCart(productId, size, qty=1){
+  if(!size){ toast('Please select a size first'); return false; }
+  const cart = getCart();
+  const existing = cart.find(c=>c.productId===productId && c.size===size);
+  if(existing){ existing.qty += qty; } else { cart.push({ productId, size, qty }); }
+  saveCart(cart);
+  toast('Added to bag');
+  return true;
+}
+function removeFromCart(productId, size){
+  saveCart(getCart().filter(c=>!(c.productId===productId && c.size===size)));
+}
+function updateQty(productId, size, delta){
+  const cart = getCart();
+  const item = cart.find(c=>c.productId===productId && c.size===size);
+  if(!item) return;
+  item.qty += delta;
+  if(item.qty<=0){ saveCart(cart.filter(c=>c!==item)); } else { saveCart(cart); }
+}
+function cartTotal(){
+  return getCart().reduce((sum,c)=>{ const p=PRODUCT_BY_ID[c.productId]; return p ? sum + p.price*c.qty : sum; },0);
+}
+function cartCount(){ return getCart().reduce((n,c)=>n+c.qty,0); }
+function renderCartCount(){
+  const badge = document.getElementById('cart-count');
+  const n = cartCount();
+  badge.textContent = n;
+  badge.classList.toggle('hidden', n===0);
+  badge.classList.toggle('flex', n>0);
+}
+async function syncCartToFirestore(cart){
+  if(!firebaseReady || !auth.currentUser) return;
+  try{
+    await db.collection('cart').doc(auth.currentUser.uid).set({
+      items: cart, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){ console.warn('Cart sync skipped:', e.message); }
+}
+
+function cartLineTemplate(item, opts={}){
+  const p = PRODUCT_BY_ID[item.productId];
+  if(!p) return '';
+  return `
+  <div class="flex gap-3">
+    <a href="#/product/${p.id}" class="w-20 h-24 bg-[#F4F4F3] shrink-0 overflow-hidden">
+      <img src="${p.images[0]}" class="w-full h-full object-cover" alt="${p.name}">
+    </a>
+    <div class="flex-1 min-w-0">
+      <a href="#/product/${p.id}" class="text-sm font-medium block truncate hover:underline">${p.name}</a>
+      <p class="text-xs text-[#8A8783] mt-0.5">Size: ${item.size}</p>
+      <p class="text-sm mt-1 font-medium">${inr(p.price)}</p>
+      <div class="flex items-center gap-3 mt-2">
+        <div class="flex items-center border border-[#E4E3E0] rounded">
+          <button class="px-2 py-1 text-sm qty-minus" data-id="${p.id}" data-size="${item.size}">−</button>
+          <span class="px-2 text-xs">${item.qty}</span>
+          <button class="px-2 py-1 text-sm qty-plus" data-id="${p.id}" data-size="${item.size}">+</button>
+        </div>
+        <button class="text-[11px] text-[#8A8783] underline remove-item" data-id="${p.id}" data-size="${item.size}">Remove</button>
+      </div>
+    </div>
+  </div>`;
+}
+function renderCartDrawer(){
+  const cart = getCart();
+  const wrap = document.getElementById('cart-drawer-items');
+  if(cart.length===0){
+    wrap.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-center py-16">
+      <p class="text-sm text-[#8A8783]">Your bag is empty.</p>
+      <a href="#/products" class="btn-outline mt-4 text-xs" id="cart-empty-shop">Shop Now</a>
+    </div>`;
+  }else{
+    wrap.innerHTML = cart.map(i=>cartLineTemplate(i)).join('<div class="border-t border-[#E4E3E0]"></div>');
+  }
+  document.getElementById('cart-subtotal').textContent = inr(cartTotal());
+  bindCartLineEvents(wrap);
+}
+function bindCartLineEvents(scope){
+  qsa('.qty-plus', scope).forEach(b=>b.onclick = ()=>updateQty(b.dataset.id,b.dataset.size,1));
+  qsa('.qty-minus', scope).forEach(b=>b.onclick = ()=>updateQty(b.dataset.id,b.dataset.size,-1));
+  qsa('.remove-item', scope).forEach(b=>b.onclick = ()=>removeFromCart(b.dataset.id,b.dataset.size));
+}
+
+/* ---------------------------------------------------------------
+   5. AUTH FLOWS
+--------------------------------------------------------------- */
+let confirmationResult = null;
+let recaptchaVerifier = null;
+
+function showLoginView(view){
+  ['login-main-view','login-email-view','login-phone-view'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById(view).classList.remove('hidden');
+  setError('login-error', null);
+}
+function setBtnLoading(btn, loading, label){
+  if(loading){ btn.dataset.label = btn.textContent; btn.disabled = true; btn.innerHTML = `<svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-opacity=".3"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>`; }
+  else{ btn.disabled = false; btn.textContent = label || btn.dataset.label || btn.textContent; }
+}
+
+async function saveUserProfile(user, extra={}){
+  if(!firebaseReady) return;
+  try{
+    await db.collection('users').doc(user.uid).set({
+      uid:user.uid,
+      name:user.displayName || extra.name || null,
+      email:user.email || null,
+      phone:user.phoneNumber || null,
+      lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true });
+  }catch(e){ console.warn('Could not save user profile:', e.message); }
+}
+
+function initAuthUI(){
+  if(!firebaseReady){
+    setError('login-error', 'Sign-in service is unavailable right now. Please refresh and try again.');
+    return;
   }
 
-  /* ---------- Router ---------- */
-  const router = {
-    go(hash, params){ router._params = params||{}; location.hash = hash; },
-    _params: {},
-    render(){
-      const hash = location.hash || "#/home";
-      const parts = hash.replace("#/","").split("/");
-      const root = document.getElementById("pageRoot");
-      root.classList.remove("view"); void root.offsetWidth; root.classList.add("view");
-      window.scrollTo({top:0, behavior:"instant"});
+  // View toggles
+  document.getElementById('btn-show-email').onclick = ()=>showLoginView('login-email-view');
+  document.getElementById('btn-show-phone').onclick = ()=>showLoginView('login-phone-view');
+  qsa('.back-btn').forEach(b=>b.onclick = ()=>showLoginView('login-main-view'));
 
-      if(parts[0]==="home"){ root.innerHTML = pages.home(); bindTilt(); }
-      else if(parts[0]==="products"){ root.innerHTML = pages.productsList(parts[1]); }
-      else if(parts[0]==="product"){ root.innerHTML = pages.productDetail(parts[1]); bindGallerySwipe(); }
-      else if(parts[0]==="cart"){ root.innerHTML = pages.cartPage(); }
-      else if(parts[0]==="order-success"){ root.innerHTML = pages.orderSuccess(router._params); }
-      else if(parts[0]==="about"){ root.innerHTML = pages.about(); }
-      else if(parts[0]==="contact"){ root.innerHTML = pages.contact(); }
-      else if(parts[0]==="terms"){ root.innerHTML = pages.legal("Terms of Service","These are placeholder Terms of Service for AUREVIA CLOTHING. Replace with your final legal copy covering site usage, orders, and liability."); }
-      else if(parts[0]==="privacy"){ root.innerHTML = pages.legal("Privacy Policy","This is a placeholder Privacy Policy for AUREVIA CLOTHING describing how customer data is collected, stored in Firebase, and used to process orders."); }
-      else if(parts[0]==="shipping"){ root.innerHTML = pages.legal("Shipping Policy","Placeholder Shipping Policy: AUREVIA CLOTHING delivers PAN India. Free shipping on orders above ₹999. Replace with your final courier & timelines copy."); }
-      else if(parts[0]==="return"){ root.innerHTML = pages.legal("Return Policy","Placeholder Return Policy: items can be returned within a defined window in original condition. Replace with your final return/exchange terms."); }
-      else { root.innerHTML = pages.home(); bindTilt(); }
+  // Google
+  document.getElementById('btn-google').onclick = async ()=>{
+    setError('login-error', null);
+    try{
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await auth.signInWithPopup(provider);
+    }catch(e){ console.error(e); setError('login-error', friendlyAuthError(e)); }
+  };
+
+  // Facebook
+  document.getElementById('btn-facebook').onclick = async ()=>{
+    setError('login-error', null);
+    try{
+      const provider = new firebase.auth.FacebookAuthProvider();
+      await auth.signInWithPopup(provider);
+    }catch(e){ console.error(e); setError('login-error', friendlyAuthError(e)); }
+  };
+
+  // Email — mode toggle (login vs signup)
+  let emailMode = 'login';
+  const emailSubmitBtn = document.getElementById('btn-email-submit');
+  const toggleSignupBtn = document.getElementById('btn-toggle-signup');
+  function refreshEmailModeUI(){
+    emailSubmitBtn.textContent = emailMode==='login' ? 'Sign In' : 'Create Account';
+    toggleSignupBtn.parentElement.firstChild.textContent = emailMode==='login' ? 'No account? ' : 'Already have an account? ';
+    toggleSignupBtn.textContent = emailMode==='login' ? 'Create one' : 'Sign in';
+  }
+  toggleSignupBtn.onclick = ()=>{ emailMode = emailMode==='login' ? 'signup' : 'login'; refreshEmailModeUI(); setError('login-error', null); };
+
+  emailSubmitBtn.onclick = async ()=>{
+    setError('login-error', null);
+    const email = document.getElementById('email-input').value.trim();
+    const pass = document.getElementById('password-input').value;
+    if(!email || !pass){ setError('login-error','Please enter both email and password.'); return; }
+    if(pass.length < 6){ setError('login-error','Password should be at least 6 characters.'); return; }
+    setBtnLoading(emailSubmitBtn, true);
+    try{
+      if(emailMode==='login'){
+        await auth.signInWithEmailAndPassword(email, pass);
+      }else{
+        await auth.createUserWithEmailAndPassword(email, pass);
+      }
+    }catch(e){
+      console.error(e);
+      setError('login-error', friendlyAuthError(e));
+    }finally{
+      setBtnLoading(emailSubmitBtn, false, emailMode==='login'?'Sign In':'Create Account');
     }
   };
-  window.addEventListener("hashchange", router.render);
 
-  /* ---------- expose public API ---------- */
-  return {
-    ui, search, checkout, auth, cart: { changeQty, remove: removeFromCart },
-    gallery, product, router
+  // Phone OTP
+  try{
+    recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size:'normal' });
+  }catch(e){ console.warn('Recaptcha init deferred:', e.message); }
+
+  const sendOtpBtn = document.getElementById('btn-send-otp');
+  sendOtpBtn.onclick = async ()=>{
+    setError('login-error', null);
+    let phone = document.getElementById('phone-input').value.trim();
+    if(!phone){ setError('login-error','Please enter your phone number.'); return; }
+    if(!phone.startsWith('+')){ phone = '+91' + phone.replace(/\D/g,''); }
+    setBtnLoading(sendOtpBtn, true);
+    try{
+      confirmationResult = await auth.signInWithPhoneNumber(phone, recaptchaVerifier);
+      document.getElementById('phone-step-1').classList.add('hidden');
+      document.getElementById('phone-step-2').classList.remove('hidden');
+      toast('OTP sent');
+    }catch(e){
+      console.error(e);
+      setError('login-error', friendlyAuthError(e));
+      if(recaptchaVerifier && recaptchaVerifier.render){
+        recaptchaVerifier.render().then(id=>{ if(window.grecaptcha) grecaptcha.reset(id); }).catch(()=>{});
+      }
+    }finally{
+      setBtnLoading(sendOtpBtn, false, 'Send OTP');
+    }
   };
-})();
+
+  const verifyOtpBtn = document.getElementById('btn-verify-otp');
+  verifyOtpBtn.onclick = async ()=>{
+    setError('login-error', null);
+    const code = document.getElementById('otp-input').value.trim();
+    if(!code || code.length < 6){ setError('login-error','Please enter the 6-digit OTP.'); return; }
+    if(!confirmationResult){ setError('login-error','Please request an OTP first.'); return; }
+    setBtnLoading(verifyOtpBtn, true);
+    try{
+      await confirmationResult.confirm(code);
+    }catch(e){
+      console.error(e);
+      setError('login-error', friendlyAuthError(e));
+    }finally{
+      setBtnLoading(verifyOtpBtn, false, 'Verify & Continue');
+    }
+  };
+
+  // Auth state — single source of truth for showing app vs login
+  auth.onAuthStateChanged(user=>{
+    if(user){
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app-root').classList.remove('hidden');
+      saveUserProfile(user);
+      renderCartCount();
+      renderCartDrawer();
+      if(!location.hash || location.hash==='#/'){ location.hash = '#/home'; }
+      router();
+    }else{
+      document.getElementById('app-root').classList.add('hidden');
+      document.getElementById('login-screen').classList.remove('hidden');
+      showLoginView('login-main-view');
+    }
+  });
+
+  document.getElementById('btn-logout').onclick = async ()=>{
+    try{ await auth.signOut(); closeDrawer(); toast('Signed out'); }
+    catch(e){ toast('Could not sign out. Try again.'); }
+  };
+}
+
+/* ---------------------------------------------------------------
+   6. ROUTER + PAGE RENDERERS
+--------------------------------------------------------------- */
+function skeletonGrid(n=8){
+  return `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">${Array.from({length:n}).map(()=>`
+    <div><div class="skeleton aspect-[3/4] mb-3"></div><div class="skeleton h-3 w-3/4 mb-2"></div><div class="skeleton h-3 w-1/3"></div></div>`).join('')}</div>`;
+}
+
+function productCard(p){
+  return `
+  <a href="#/product/${p.id}" class="group block">
+    <div class="prod-card-img-wrap aspect-[3/4] bg-[#F4F4F3] relative">
+      <img src="${p.images[0]}" alt="${p.name}" class="w-full h-full object-cover absolute inset-0 opacity-100 group-hover:opacity-0" loading="lazy">
+      <img src="${p.images[1]||p.images[0]}" alt="" class="w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100" loading="lazy">
+      ${p.sale ? `<span class="absolute top-2 left-2 bg-[#B21F24] text-white text-[10px] uppercase tracking-wide px-2 py-1">Sale</span>` : ''}
+    </div>
+    <div class="pt-3">
+      <p class="text-sm text-[#111111] leading-snug">${p.name}</p>
+      <div class="flex items-center gap-2 mt-1">
+        <span class="text-sm font-medium">${inr(p.price)}</span>
+        ${p.sale ? `<span class="text-xs text-[#8A8783] line-through">${inr(p.mrp)}</span>` : ''}
+      </div>
+    </div>
+  </a>`;
+}
+
+function renderHome(){
+  const featuredByCat = CATEGORIES.map(c=>PRODUCTS.find(p=>p.category===c.key));
+  return `
+  <section class="relative">
+    <div class="w-full aspect-[4/5] sm:aspect-[16/9] overflow-hidden bg-[#F4F4F3]">
+      <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1663.jpg?v=1785589886" alt="Aurevia Clothing hero" class="w-full h-full object-cover">
+    </div>
+    <div class="absolute inset-x-0 bottom-10 sm:bottom-16 flex justify-center">
+      <a href="#/products" class="btn-primary shadow-xl">Explore Now</a>
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+    <h2 class="font-display text-2xl sm:text-3xl text-center mb-10 tracking-tight">Explore Categories</h2>
+    <div class="cat-scene grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+      ${CATEGORIES.map((c,i)=>`
+        <a href="#/collection/${c.key}" class="cat-card block rounded-sm overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.06)] bg-[#F4F4F3]" data-tilt>
+          <div class="cat-card-inner">
+            <div class="aspect-[4/5] overflow-hidden">
+              <img src="${featuredByCat[i]?.images[0]}" alt="${c.label}" class="w-full h-full object-cover" loading="lazy">
+            </div>
+            <div class="py-3 text-center">
+              <span class="text-xs sm:text-sm uppercase tracking-widest">${c.label}</span>
+            </div>
+          </div>
+        </a>`).join('')}
+    </div>
+  </section>
+
+  <div class="bg-[#B21F24] text-white py-2.5 overflow-hidden">
+    <div class="red-marquee-track text-xs sm:text-sm tracking-wide font-medium">
+      ${Array.from({length:2}).map(()=>`<span class="mx-6">ALL OVER INDIA DELIVERY AVAILABLE &nbsp;|&nbsp; FREE SHIPPING ABOVE ₹999 ORDERS &nbsp;|&nbsp; 100% TRUSTED</span><span class="mx-6">ALL OVER INDIA DELIVERY AVAILABLE &nbsp;|&nbsp; FREE SHIPPING ABOVE ₹999 ORDERS &nbsp;|&nbsp; 100% TRUSTED</span>`).join('')}
+    </div>
+  </div>
+
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+    <a href="#/sale" class="block relative rounded-sm overflow-hidden group">
+      <div class="aspect-[16/9] sm:aspect-[21/9] bg-[#F4F4F3]">
+        <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1592.png?v=1785393299" alt="End of Season Sale" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+      </div>
+      <div class="absolute inset-0 bg-black/25 flex items-center justify-center">
+        <span class="font-display text-2xl sm:text-4xl text-white tracking-tight">End of Season Sale</span>
+      </div>
+    </a>
+  </section>
+
+  <section class="max-w-4xl mx-auto px-6 py-16 sm:py-24 text-center">
+    <p class="text-xs uppercase tracking-widest text-[#8A8783] mb-3">Our Journey</p>
+    <h2 class="font-display text-2xl sm:text-3xl mb-6 tracking-tight">A Brand Built On Vision</h2>
+    <p class="text-sm sm:text-base text-[#4a4a4a] leading-relaxed">Every great brand starts with a vision. This section represents the journey, passion and values behind AUREVIA CLOTHING. Replace this text with your original brand story.</p>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
+    <div class="flex items-center justify-between mb-8">
+      <h2 class="font-display text-2xl tracking-tight">New Arrivals</h2>
+      <a href="#/products" class="text-xs uppercase tracking-widest underline">View All</a>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+      ${PRODUCTS.slice(0,8).map(productCard).join('')}
+    </div>
+  </section>`;
+}
+
+function renderProductGridPage(title, list, opts={}){
+  return `
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+    <div class="mb-8">
+      <h1 class="font-display text-2xl sm:text-3xl tracking-tight">${title}</h1>
+      <p class="text-xs text-[#8A8783] mt-1">${list.length} products</p>
+    </div>
+    ${opts.filters ? `
+    <div class="flex flex-wrap gap-2 mb-8">
+      <a href="#/products" class="px-3 py-1.5 text-xs border ${!opts.active?'bg-[#111111] text-white border-[#111111]':'border-[#E4E3E0]'} rounded-full">All</a>
+      ${CATEGORIES.map(c=>`<a href="#/collection/${c.key}" class="px-3 py-1.5 text-xs border ${opts.active===c.key?'bg-[#111111] text-white border-[#111111]':'border-[#E4E3E0]'} rounded-full">${c.label}</a>`).join('')}
+      <a href="#/sale" class="px-3 py-1.5 text-xs border ${opts.active==='sale'?'bg-[#B21F24] text-white border-[#B21F24]':'border-[#E4E3E0] text-[#B21F24]'} rounded-full">Sale</a>
+    </div>` : ''}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+      ${list.map(productCard).join('') || `<p class="col-span-full text-sm text-[#8A8783]">No products found.</p>`}
+    </div>
+  </section>`;
+}
+
+function renderProductPage(id){
+  const p = PRODUCT_BY_ID[id];
+  if(!p){ return `<div class="max-w-xl mx-auto px-6 py-24 text-center"><p class="text-sm text-[#8A8783]">Product not found.</p><a href="#/products" class="btn-outline mt-6 inline-block">Back to shop</a></div>`; }
+  return `
+  <section class="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
+    <div class="grid md:grid-cols-2 gap-8 md:gap-14">
+      <div>
+        <div class="gallery-main" id="gallery-main" data-idx="0">
+          <img src="${p.images[0]}" alt="${p.name}" id="gallery-img">
+          ${p.images.length>1 ? `
+          <button class="gallery-arrow left-3" id="gal-prev" aria-label="Previous image">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <button class="gallery-arrow right-3" id="gal-next" aria-label="Next image">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </button>` : ''}
+        </div>
+        ${p.images.length>1 ? `<div class="flex gap-2 mt-3">${p.images.map((img,i)=>`<button class="thumb-btn w-16 h-20 border ${i===0?'border-[#111111]':'border-[#E4E3E0]'} overflow-hidden" data-i="${i}"><img src="${img}" class="w-full h-full object-cover"></button>`).join('')}</div>` : ''}
+      </div>
+      <div>
+        <p class="text-xs uppercase tracking-widest text-[#8A8783] mb-2">${p.categoryLabel}</p>
+        <h1 class="font-display text-2xl sm:text-3xl tracking-tight mb-3">${p.name}</h1>
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-xl font-medium">${inr(p.price)}</span>
+          ${p.sale ? `<span class="text-sm text-[#8A8783] line-through">${inr(p.mrp)}</span><span class="text-xs text-[#B21F24] font-medium">${Math.round((1-p.price/p.mrp)*100)}% OFF</span>` : ''}
+        </div>
+        <p class="text-sm text-[#4a4a4a] leading-relaxed mb-8">${p.description}</p>
+
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs uppercase tracking-widest font-medium">Select Size</span>
+          <button id="btn-open-sizeguide" class="text-xs underline text-[#8A8783]">Size Guide</button>
+        </div>
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2" id="size-selector">
+          ${SIZES.map(s=>`<div class="size-chip" data-size="${s}">${s}</div>`).join('')}
+        </div>
+        <p id="size-required-msg" class="hidden text-xs text-[#B21F24] mb-4">Please select a size before continuing.</p>
+
+        <div class="flex flex-col sm:flex-row gap-3 mt-6">
+          <button id="btn-add-to-cart" class="btn-outline flex-1" data-id="${p.id}">Add To Cart</button>
+          <button id="btn-buy-now" class="btn-primary flex-1" data-id="${p.id}">Buy Now</button>
+        </div>
+
+        <div class="mt-10 pt-6 border-t border-[#E4E3E0] space-y-2 text-xs text-[#8A8783]">
+          <p>✓ Free shipping on orders above ₹999</p>
+          <p>✓ PAN India delivery</p>
+          <p>✓ Easy 7-day returns</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
+    <h2 class="font-display text-xl tracking-tight mb-6">You May Also Like</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+      ${PRODUCTS.filter(x=>x.category===p.category && x.id!==p.id).slice(0,4).map(productCard).join('')}
+    </div>
+  </section>`;
+}
+
+function renderCartPage(){
+  const cart = getCart();
+  return `
+  <section class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+    <h1 class="font-display text-2xl sm:text-3xl tracking-tight mb-8">Your Bag</h1>
+    ${cart.length===0 ? `
+      <div class="text-center py-20">
+        <p class="text-sm text-[#8A8783] mb-6">Your bag is empty.</p>
+        <a href="#/products" class="btn-primary">Start Shopping</a>
+      </div>` : `
+      <div class="space-y-6 mb-10" id="cart-page-items">
+        ${cart.map(i=>`<div class="pb-6 border-b border-[#E4E3E0]">${cartLineTemplate(i)}</div>`).join('')}
+      </div>
+      <div class="flex justify-between items-center mb-6">
+        <span class="text-sm">Subtotal</span>
+        <span class="text-lg font-medium">${inr(cartTotal())}</span>
+      </div>
+      <button id="btn-checkout-page" class="btn-primary w-full sm:w-auto">Proceed to Checkout</button>
+    `}
+  </section>`;
+}
+
+const STATIC_PAGES = {
+  about:{
+    title:'About Us',
+    body:`
+    <p>Welcome to AUREVIA CLOTHING – your ultimate destination for premium sports jerseys and stylish apparel.</p>
+    <p>AUREVIA CLOTHING was created with a vision to provide high-quality, affordable, and trendy apparel for true fashion lovers across India.</p>
+    <p>We focus on delivering premium designs, comfortable fabric, and the latest collections inspired by modern trends.</p>
+    <p>Our goal is simple — to bring you the best combination of style, quality, and value.</p>
+    <p class="font-medium mt-6 mb-2">Why Choose AUREVIA CLOTHING?</p>
+    <ul class="list-disc list-inside space-y-1">
+      <li>Premium Quality Products</li>
+      <li>Affordable Pricing</li>
+      <li>PAN India Delivery</li>
+      <li>Trusted Service</li>
+    </ul>
+    <p class="mt-6">We are passionate about fashion and aim to deliver products that represent your personality.</p>
+    <p class="font-medium mt-6 mb-2">Contact Details</p>
+    <p>Umer Buniyad Takildar<br>+91 73850 09275<br>Darga Galli Ajara, Kolhapur, Maharashtra</p>`
+  },
+  contact:{
+    title:'Contact Us',
+    body:`
+    <p>We'd love to hear from you. Reach out with any questions about orders, products or partnerships.</p>
+    <p class="font-medium mt-6 mb-2">Get in Touch</p>
+    <p>Umer Buniyad Takildar<br>Phone: +91 73850 09275<br>Address: Darga Galli Ajara, Kolhapur, Maharashtra</p>
+    <p class="mt-6"><a href="https://wa.me/917385009275" target="_blank" rel="noopener" class="underline">Message us on WhatsApp</a></p>`
+  },
+  terms:{
+    title:'Terms of Service',
+    body:`<p>These Terms of Service govern your use of the AUREVIA CLOTHING website. By accessing or using our site, you agree to be bound by these terms. This is placeholder content — replace with your finalized terms before launch.</p>
+    <p>All content, product listings and pricing are subject to change without notice. Orders are confirmed only after successful payment.</p>`
+  },
+  privacy:{
+    title:'Privacy Policy',
+    body:`<p>AUREVIA CLOTHING respects your privacy. We collect only the information necessary to process orders and improve your shopping experience, including account, contact and order details. This is placeholder content — replace with your finalized policy before launch.</p>
+    <p>We do not sell your personal data to third parties.</p>`
+  },
+  shipping:{
+    title:'Shipping Policy',
+    body:`<p>We deliver PAN India. Orders above ₹999 qualify for free shipping; orders below this threshold may incur a shipping fee at checkout. This is placeholder content — replace with your finalized policy before launch.</p>
+    <p>Standard delivery timelines range from 3–7 business days depending on your location.</p>`
+  },
+  return:{
+    title:'Return Policy',
+    body:`<p>If you're not fully satisfied, most items are eligible for return within 7 days of delivery, provided they are unused and in original packaging. This is placeholder content — replace with your finalized policy before launch.</p>
+    <p>To initiate a return, contact us via WhatsApp or phone with your order details.</p>`
+  }
+};
+function renderStaticPage(key){
+  const page = STATIC_PAGES[key];
+  if(!page) return `<div class="max-w-xl mx-auto px-6 py-24 text-center text-sm text-[#8A8783]">Page not found.</div>`;
+  return `<section class="max-w-3xl mx-auto px-6 py-14 sm:py-20">
+    <h1 class="font-display text-2xl sm:text-3xl tracking-tight mb-8">${page.title}</h1>
+    <div class="prose text-sm sm:text-base text-[#4a4a4a] leading-relaxed space-y-4">${page.body}</div>
+  </section>`;
+}
+
+function renderOrderSuccess(orderId){
+  return `<section class="max-w-lg mx-auto px-6 py-24 text-center">
+    <div class="w-14 h-14 rounded-full bg-[#111111] text-white flex items-center justify-center mx-auto mb-6">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <h1 class="font-display text-2xl mb-3">Order Confirmed</h1>
+    <p class="text-sm text-[#8A8783] mb-1">Order ID: ${orderId}</p>
+    <p class="text-sm text-[#4a4a4a] mb-8">Thank you for shopping with Aurevia Clothing. A confirmation has been saved to your account.</p>
+    <a href="#/products" class="btn-primary">Continue Shopping</a>
+  </section>`;
+}
+
+function router(){
+  const hash = location.hash || '#/home';
+  const parts = hash.replace('#/','').split('/').filter(Boolean);
+  const page = document.getElementById('page-content');
+  window.scrollTo({top:0, behavior:'instant' in window ? 'instant':'auto'});
+  closeAllOverlays();
+
+  if(parts[0]==='home' || parts.length===0){
+    page.innerHTML = renderHome();
+    initTiltCards();
+  }else if(parts[0]==='products'){
+    page.innerHTML = renderProductGridPage('Explore All Products', PRODUCTS, { filters:true, active:null });
+  }else if(parts[0]==='collection' && parts[1]){
+    const cat = CATEGORIES.find(c=>c.key===parts[1]);
+    const list = PRODUCTS.filter(p=>p.category===parts[1]);
+    page.innerHTML = renderProductGridPage(cat ? cat.label : 'Collection', list, { filters:true, active:parts[1] });
+  }else if(parts[0]==='sale'){
+    const list = PRODUCTS.filter(p=>p.category==='sale');
+    page.innerHTML = renderProductGridPage('End of Season Sale', list, { filters:true, active:'sale' });
+  }else if(parts[0]==='product' && parts[1]){
+    page.innerHTML = renderProductPage(parts[1]);
+    initProductPage(parts[1]);
+  }else if(parts[0]==='cart'){
+    page.innerHTML = renderCartPage();
+    bindCartLineEvents(page);
+    const btn = document.getElementById('btn-checkout-page');
+    if(btn) btn.onclick = ()=>openGoKwikCheckout();
+  }else if(parts[0]==='order-success'){
+    page.innerHTML = renderOrderSuccess(parts[1] || '—');
+  }else if(STATIC_PAGES[parts[0]]){
+    page.innerHTML = renderStaticPage(parts[0]);
+  }else{
+    page.innerHTML = `<div class="max-w-xl mx-auto px-6 py-24 text-center"><h1 class="font-display text-2xl mb-3">Page Not Found</h1><a href="#/home" class="btn-outline inline-block mt-4">Back Home</a></div>`;
+  }
+}
+
+function initProductPage(id){
+  const p = PRODUCT_BY_ID[id];
+  if(!p) return;
+  let selectedSize = null;
+  let idx = 0;
+
+  const galleryImg = document.getElementById('gallery-img');
+  function setImage(i){
+    idx = (i + p.images.length) % p.images.length;
+    galleryImg.src = p.images[idx];
+    qsa('.thumb-btn').forEach(t=>t.classList.toggle('border-[#111111]', Number(t.dataset.i)===idx));
+    qsa('.thumb-btn').forEach(t=>t.classList.toggle('border-[#E4E3E0]', Number(t.dataset.i)!==idx));
+  }
+  const prevBtn = document.getElementById('gal-prev');
+  const nextBtn = document.getElementById('gal-next');
+  if(prevBtn) prevBtn.onclick = ()=>setImage(idx-1);
+  if(nextBtn) nextBtn.onclick = ()=>setImage(idx+1);
+  qsa('.thumb-btn').forEach(t=>t.onclick = ()=>setImage(Number(t.dataset.i)));
+
+  // swipe support
+  let touchStartX = null;
+  const mainEl = document.getElementById('gallery-main');
+  mainEl.addEventListener('touchstart', e=>{ touchStartX = e.touches[0].clientX; }, {passive:true});
+  mainEl.addEventListener('touchend', e=>{
+    if(touchStartX===null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if(Math.abs(dx) > 40){ setImage(dx>0 ? idx-1 : idx+1); }
+    touchStartX = null;
+  }, {passive:true});
+
+  // size select
+  qsa('#size-selector .size-chip').forEach(chip=>{
+    chip.onclick = ()=>{
+      qsa('#size-selector .size-chip').forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedSize = chip.dataset.size;
+      document.getElementById('size-required-msg').classList.add('hidden');
+    };
+  });
+
+  document.getElementById('btn-add-to-cart').onclick = ()=>{
+    if(!selectedSize){ document.getElementById('size-required-msg').classList.remove('hidden'); return; }
+    addToCart(p.id, selectedSize, 1);
+  };
+  document.getElementById('btn-buy-now').onclick = ()=>{
+    if(!selectedSize){ document.getElementById('size-required-msg').classList.remove('hidden'); return; }
+    addToCart(p.id, selectedSize, 1);
+    openGoKwikCheckout();
+  };
+
+  document.getElementById('btn-open-sizeguide').onclick = openSizeGuide;
+}
+
+/* ---------------------------------------------------------------
+   7. UI WIDGETS
+--------------------------------------------------------------- */
+// ---- Drawer (hamburger) ----
+function openDrawer(){
+  document.getElementById('drawer-menu').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawer-menu').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+// ---- Cart drawer ----
+function openCartDrawer(){
+  renderCartDrawer();
+  document.getElementById('cart-drawer').classList.add('open');
+  document.getElementById('cart-overlay').classList.add('open');
+}
+function closeCartDrawer(){
+  document.getElementById('cart-drawer').classList.remove('open');
+  document.getElementById('cart-overlay').classList.remove('open');
+}
+// ---- Search overlay ----
+function openSearch(){
+  document.getElementById('search-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('search-input').focus(), 100);
+}
+function closeSearch(){
+  document.getElementById('search-overlay').classList.remove('open');
+}
+function runSearch(term){
+  const resultsEl = document.getElementById('search-results');
+  const q = term.trim().toLowerCase();
+  if(!q){ resultsEl.innerHTML = `<p class="text-xs text-[#8A8783]">Start typing to search products, categories and pages.</p>`; return; }
+
+  const prodMatches = PRODUCTS.filter(p=>p.name.toLowerCase().includes(q) || p.categoryLabel.toLowerCase().includes(q)).slice(0,12);
+  const catMatches = CATEGORIES.filter(c=>c.label.toLowerCase().includes(q));
+  const pageMatches = Object.entries(STATIC_PAGES).filter(([k,v])=>v.title.toLowerCase().includes(q));
+
+  let html = '';
+  if(catMatches.length){
+    html += `<p class="text-[11px] uppercase tracking-widest text-[#8A8783] mb-2">Categories</p><div class="flex flex-wrap gap-2 mb-6">${catMatches.map(c=>`<a href="#/collection/${c.key}" class="search-result-link px-3 py-1.5 border border-[#E4E3E0] rounded-full text-xs">${c.label}</a>`).join('')}</div>`;
+  }
+  if(pageMatches.length){
+    html += `<p class="text-[11px] uppercase tracking-widest text-[#8A8783] mb-2">Pages</p><div class="flex flex-wrap gap-2 mb-6">${pageMatches.map(([k,v])=>`<a href="#/${k}" class="search-result-link px-3 py-1.5 border border-[#E4E3E0] rounded-full text-xs">${v.title}</a>`).join('')}</div>`;
+  }
+  if(prodMatches.length){
+    html += `<p class="text-[11px] uppercase tracking-widest text-[#8A8783] mb-3">Products (${prodMatches.length})</p><div class="grid grid-cols-2 sm:grid-cols-4 gap-4">${prodMatches.map(productCard).join('')}</div>`;
+  }
+  if(!catMatches.length && !pageMatches.length && !prodMatches.length){
+    html = `<p class="text-sm text-[#8A8783]">No results for "${term}".</p>`;
+  }
+  resultsEl.innerHTML = html;
+  qsa('.search-result-link, a', resultsEl).forEach(a=>a.addEventListener('click', closeSearch));
+}
+// ---- Size guide modal ----
+const SIZE_GUIDE_IMAGES = [
+  'https://cdn.shopify.com/s/files/1/1037/0203/6763/files/13A9F1CC-690A-4624-BACF-00C9362D4663.png?v=1785590678',
+  'https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1665.jpg?v=1785590762',
+  'https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1666.jpg?v=1785590762',
+  'https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1665.jpg?v=1785590762',
+  'https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1667.jpg?v=1785590762'
+];
+let sgIdx = 0;
+function openSizeGuide(){
+  sgIdx = 0;
+  updateSizeGuide();
+  document.getElementById('sizeguide-overlay').classList.add('open');
+}
+function closeSizeGuide(){ document.getElementById('sizeguide-overlay').classList.remove('open'); }
+function updateSizeGuide(){
+  document.getElementById('sizeguide-img').src = SIZE_GUIDE_IMAGES[sgIdx];
+  document.getElementById('sg-counter').textContent = `${sgIdx+1} / ${SIZE_GUIDE_IMAGES.length}`;
+}
+// ---- 3D tilt on category cards ----
+function initTiltCards(){
+  qsa('[data-tilt]').forEach(card=>{
+    card.addEventListener('mousemove', e=>{
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left)/r.width - 0.5;
+      const y = (e.clientY - r.top)/r.height - 0.5;
+      card.style.transform = `rotateY(${x*10}deg) rotateX(${-y*10}deg) translateY(-4px)`;
+    });
+    card.addEventListener('mouseleave', ()=>{ card.style.transform = 'rotateY(0) rotateX(0) translateY(0)'; });
+  });
+}
+// ---- GoKwik checkout placeholder ----
+function openGoKwikCheckout(){
+  const cart = getCart();
+  if(cart.length===0){ toast('Your bag is empty'); return; }
+  const total = cartTotal();
+  const body = document.getElementById('gokwik-modal-body');
+  body.innerHTML = `
+    <div class="text-center mb-5">
+      <p class="text-[10px] uppercase tracking-widest text-[#8A8783] mb-1">Secure Checkout</p>
+      <h2 class="font-display text-xl">GoKwik Checkout</h2>
+    </div>
+    <div class="border border-[#E4E3E0] rounded p-4 mb-5">
+      <div class="flex justify-between text-sm mb-2"><span>Items (${cartCount()})</span><span>${inr(total)}</span></div>
+      <div class="flex justify-between text-sm mb-2"><span>Shipping</span><span>${total>=999?'Free':inr(99)}</span></div>
+      <div class="flex justify-between text-sm font-medium pt-2 border-t border-[#E4E3E0]"><span>Total</span><span>${inr(total>=999?total:total+99)}</span></div>
+    </div>
+    <p class="text-[11px] text-[#8A8783] mb-5">This is an integration placeholder for GoKwik Checkout. Connect your GoKwik merchant credentials server-side to enable live payments.</p>
+    <button id="btn-gokwik-pay" class="btn-primary w-full">Pay Now</button>
+    <button id="btn-gokwik-cancel" class="btn-outline w-full mt-3">Cancel</button>
+  `;
+  document.getElementById('gokwik-overlay').classList.add('open');
+  document.getElementById('btn-gokwik-cancel').onclick = ()=>document.getElementById('gokwik-overlay').classList.remove('open');
+  document.getElementById('btn-gokwik-pay').onclick = async ()=>{
+    const payBtn = document.getElementById('btn-gokwik-pay');
+    setBtnLoading(payBtn, true);
+    const orderId = 'AUR' + Date.now().toString().slice(-8);
+    try{
+      if(firebaseReady && auth.currentUser){
+        await db.collection('orders').doc(orderId).set({
+          orderId, uid: auth.currentUser.uid, items: cart, total,
+          status: 'paid', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await db.collection('payments').doc(orderId).set({
+          orderId, uid: auth.currentUser.uid, amount: total, provider:'gokwik-placeholder',
+          status:'success', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }catch(e){ console.warn('Order save skipped:', e.message); }
+    saveCart([]);
+    document.getElementById('gokwik-overlay').classList.remove('open');
+    location.hash = '#/order-success/' + orderId;
+    toast('Payment successful');
+  };
+}
+
+function closeAllOverlays(){
+  closeDrawer(); closeCartDrawer(); closeSearch(); closeSizeGuide();
+  document.getElementById('gokwik-overlay').classList.remove('open');
+}
+
+/* ---------------------------------------------------------------
+   8. BOOT
+--------------------------------------------------------------- */
+function bindGlobalUI(){
+  document.getElementById('btn-hamburger').onclick = openDrawer;
+  document.getElementById('btn-close-drawer').onclick = closeDrawer;
+  document.getElementById('drawer-overlay').onclick = closeDrawer;
+  qsa('.drawer-link').forEach(a=>a.addEventListener('click', closeDrawer));
+
+  document.getElementById('btn-cart').onclick = openCartDrawer;
+  document.getElementById('btn-close-cart').onclick = closeCartDrawer;
+  document.getElementById('cart-overlay').onclick = closeCartDrawer;
+  document.getElementById('btn-view-cart').addEventListener('click', closeCartDrawer);
+  document.getElementById('btn-checkout-drawer').onclick = ()=>{ closeCartDrawer(); openGoKwikCheckout(); };
+
+  document.getElementById('btn-search').onclick = openSearch;
+  document.getElementById('btn-search-mobile').onclick = openSearch;
+  document.getElementById('btn-close-search').onclick = closeSearch;
+  document.getElementById('search-input').addEventListener('input', e=>runSearch(e.target.value));
+  runSearch('');
+
+  document.getElementById('btn-close-sizeguide').onclick = closeSizeGuide;
+  document.getElementById('sizeguide-overlay').addEventListener('click', e=>{ if(e.target.id==='sizeguide-overlay') closeSizeGuide(); });
+  document.getElementById('sg-prev').onclick = ()=>{ sgIdx = (sgIdx-1+SIZE_GUIDE_IMAGES.length)%SIZE_GUIDE_IMAGES.length; updateSizeGuide(); };
+  document.getElementById('sg-next').onclick = ()=>{ sgIdx = (sgIdx+1)%SIZE_GUIDE_IMAGES.length; updateSizeGuide(); };
+
+  document.getElementById('gokwik-overlay').addEventListener('click', e=>{ if(e.target.id==='gokwik-overlay') e.currentTarget.classList.remove('open'); });
+
+  document.getElementById('btn-account').onclick = ()=>{ openDrawer(); };
+
+  window.addEventListener('hashchange', router);
+}
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  bindGlobalUI();
+  initAuthUI();
+  renderCartCount();
+});
 </script>
 </body>
 </html>
