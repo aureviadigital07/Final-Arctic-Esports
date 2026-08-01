@@ -1,1820 +1,927 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Arctic Esports — BGMI Scrims, Weekly War & Tournaments</title>
-<meta name="description" content="Arctic Esports runs daily BGMI scrims, Weekly War, Weekend War and premium tournaments. Fair play, real competition, fast registration." />
-<meta name="keywords" content="BGMI scrims, BGMI tournament, Arctic Esports, weekly war, weekend war" />
-<meta name="robots" content="index, follow" />
-<meta property="og:title" content="Arctic Esports — BGMI Scrims & Tournaments" />
-<meta property="og:description" content="Fair play. Real competition. Fast registration." />
-<meta property="og:type" content="website" />
-<meta name="twitter:card" content="summary_large_image" />
-<link rel="icon" href="YOUR_FAVICON" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUREVIA CLOTHING — Premium Sportswear & Apparel</title>
+<meta name="description" content="AUREVIA CLOTHING — premium jerseys, sportswear and apparel. PAN India delivery.">
 
-<!-- ================= ALLOWED EXTERNAL DEPENDENCIES ONLY =================
-     Tailwind CDN, Google Fonts, Firebase CDN modules, Font Awesome.
-     No build tools, no npm, no bundlers — this file runs by itself. ===== -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<!-- Tailwind CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: { ink: '#0A0A0F', frost: '#F5F7FA', steel: '#94A3B8', bolt: '#2563EB', cyan: '#22D3EE' },
-        fontFamily: {
-          display: ['Rajdhani', 'sans-serif'],
-          body: ['Inter', 'sans-serif'],
-          mono: ['"Space Mono"', 'monospace'],
-        },
-      },
-    },
-  };
-</script>
+
+<!-- Fonts: Fraunces for the wordmark/display, Inter for everything functional -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase (compat build — simplest for a single static file, no bundler) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <style>
-  html { scroll-behavior: smooth; }
-  body { font-family: 'Inter', sans-serif; }
-  .font-display { font-family: 'Rajdhani', sans-serif; }
+/* ============================================================
+   AUREVIA CLOTHING — core design tokens
+   White premium luxury theme. Everything else derives from these.
+   ============================================================ */
+:root{
+  --bg:#FFFFFF;
+  --text:#111111;
+  --grey:#F4F4F2;      /* minimal accent grey */
+  --grey-line:#E7E7E4;
+  --btn-bg:#111111;
+  --btn-text:#FFFFFF;
+  --red:#B3181A;
+}
+*{box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);}
+body{font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden;}
+.font-display{font-family:'Fraunces',serif;}
+::selection{background:#111;color:#fff;}
+a{-webkit-tap-highlight-color:transparent;}
 
-  /* HUD corner-bracket motif — the site's signature card treatment */
-  .hud-frame { position: relative; }
-  .hud-frame > .hud-tr, .hud-frame > .hud-bl {
-    position: absolute; width: 16px; height: 16px; opacity: 0;
-    transition: opacity .25s ease, width .25s ease, height .25s ease;
-  }
-  .hud-frame > .hud-tr { top: 8px; right: 8px; border-top: 2px solid #22D3EE; border-right: 2px solid #22D3EE; }
-  .hud-frame > .hud-bl { bottom: 8px; left: 8px; border-bottom: 2px solid #22D3EE; border-left: 2px solid #22D3EE; }
-  .hud-frame:hover > .hud-tr, .hud-frame:hover > .hud-bl { opacity: 1; width: 24px; height: 24px; }
+/* scrollbar, subtle */
+::-webkit-scrollbar{width:8px;}
+::-webkit-scrollbar-thumb{background:#ddd;border-radius:8px;}
 
-  .ticker-track { animation: ticker 28s linear infinite; }
-  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-  @keyframes pulseSoft { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
-  .pulse-soft { animation: pulseSoft 2.2s ease-in-out infinite; }
+/* generic fade/slide helpers */
+.view{animation:fadeIn .45s ease both;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@media (prefers-reduced-motion: reduce){
+  .view{animation:none;}
+  *{transition:none !important; animation-duration:.001s !important;}
+}
 
-  .ripple { position: relative; overflow: hidden; }
-  .ripple span.rip { position: absolute; border-radius: 9999px; background: rgba(255,255,255,.5); transform: scale(0); animation: rip .6s ease-out; pointer-events: none; }
-  @keyframes rip { to { transform: scale(4); opacity: 0; } }
+/* drawer / cart / search sliding panels */
+.panel{transform:translateX(100%);transition:transform .4s cubic-bezier(.16,1,.3,1);}
+.panel.open{transform:translateX(0);}
+.panel-left{transform:translateX(-100%);}
+.panel-left.open{transform:translateX(0);}
+.overlay{opacity:0;pointer-events:none;transition:opacity .35s ease;}
+.overlay.open{opacity:1;pointer-events:auto;}
 
-  .fade-up { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
-  .fade-up.in-view { opacity: 1; transform: translateY(0); }
+/* buttons */
+.btn-solid{background:var(--btn-bg);color:var(--btn-text);transition:transform .2s ease, opacity .2s ease;}
+.btn-solid:hover{opacity:.85;transform:translateY(-1px);}
+.btn-outline{border:1px solid #111;color:#111;transition:background .2s ease,color .2s ease;}
+.btn-outline:hover{background:#111;color:#fff;}
 
-  .glow-blue { transition: box-shadow .3s ease, transform .2s ease; }
-  .glow-blue:hover { box-shadow: 0 0 26px rgba(37,99,235,.5); transform: translateY(-2px); }
+/* category 3D cards */
+.cat-card{perspective:1000px;}
+.cat-card-inner{transform-style:preserve-3d;transition:transform .25s ease, box-shadow .25s ease;will-change:transform;}
+.cat-card:hover .cat-card-inner, .cat-card.tilt .cat-card-inner{box-shadow:0 25px 45px -15px rgba(0,0,0,.25);}
+.cat-card img{transition:transform .6s cubic-bezier(.16,1,.3,1);}
+.cat-card:hover img{transform:scale(1.08);}
 
-  header.scrolled { box-shadow: 0 8px 24px rgba(0,0,0,.35); }
-  #searchOverlay { backdrop-filter: blur(6px); }
-  ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 999px; }
+/* marquee */
+.marquee-track{display:flex;white-space:nowrap;animation:marquee 22s linear infinite;}
+@keyframes marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
 
-  .spinner { border: 3px solid rgba(148,163,184,.3); border-top-color: #2563EB; border-radius: 50%; width: 22px; height: 22px; animation: spin .7s linear infinite; display: inline-block; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* product image fade between gallery slides */
+.gallery-slide{transition:opacity .35s ease;}
 
-  .skeleton { background: linear-gradient(90deg,#12141c 25%,#1e2230 37%,#12141c 63%); background-size: 400% 100%; animation: sk 1.4s ease infinite; }
-  @keyframes sk { 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+/* skeleton loading shimmer for product grid */
+.skel{background:linear-gradient(90deg,#f1f1ef 25%,#e9e9e6 37%,#f1f1ef 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
 
-  @media (prefers-reduced-motion: reduce) {
-    .ticker-track { animation: none; } .pulse-soft { animation: none; }
-    .fade-up { transition: none; opacity: 1; transform: none; }
-  }
+/* focus visibility for keyboard users */
+a:focus-visible, button:focus-visible, input:focus-visible{outline:2px solid #111;outline-offset:2px;}
 
-  /* Admin dashboard glass panels */
-  .glass { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(10px); }
-  .nav-link { display: flex; align-items: center; gap: .6rem; padding: .65rem .9rem; border-radius: .6rem; color: #94A3B8; font-family: 'Rajdhani', sans-serif; font-weight: 600; cursor: pointer; }
-  .nav-link:hover { background: rgba(255,255,255,.06); color: #fff; }
-  .nav-link.active { background: linear-gradient(90deg,#2563EB33,#22D3EE22); color: #fff; border-left: 2px solid #22D3EE; }
-  table.admin-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-  table.admin-table th { text-align: left; color: #64748B; font-family: 'Rajdhani', sans-serif; font-weight: 600; padding: .6rem .8rem; border-bottom: 1px solid rgba(255,255,255,.08); white-space: nowrap; }
-  table.admin-table td { padding: .7rem .8rem; border-bottom: 1px solid rgba(255,255,255,.05); color: #E2E8F0; white-space: nowrap; }
-  .pill { padding: .2rem .7rem; border-radius: 9999px; font-size: .7rem; font-family: 'Rajdhani', sans-serif; font-weight: 600; }
-  .bar-row { display: flex; align-items: center; gap: .5rem; }
-  .bar-track { flex: 1; height: 8px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
-  .bar-fill { height: 100%; background: linear-gradient(90deg,#2563EB,#22D3EE); }
+/* size pill */
+.size-pill{border:1px solid #d9d9d6;transition:all .15s ease;}
+.size-pill.selected{background:#111;color:#fff;border-color:#111;}
+.size-pill:hover{border-color:#111;}
+
+/* toast */
+#toast{transform:translateY(140%);transition:transform .35s cubic-bezier(.16,1,.3,1);}
+#toast.show{transform:translateY(0);}
+
+.hide{display:none !important;}
 </style>
 </head>
-<body class="bg-ink text-frost antialiased">
+<body class="bg-white text-[#111]">
 
-<!-- App mounts entirely here — every "page" is a JS-rendered view swapped into #app. -->
-<div id="app"></div>
+<!-- ============================================================
+     LOGIN GATE — full screen, shown before any auth state resolves
+     to the "logged in" state. Renders on top of everything.
+     ============================================================ -->
+<div id="loginGate" class="fixed inset-0 z-[100] bg-white flex items-center justify-center px-5">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650" alt="Aurevia Clothing" class="h-14 mx-auto mb-6 object-contain">
+      <h1 class="font-display text-2xl tracking-tight">Welcome to AUREVIA</h1>
+      <p class="text-sm text-gray-500 mt-1">Sign in to continue to premium sportswear & apparel</p>
+    </div>
 
-<!-- ==========================================================================
-     Firebase Modular SDK via CDN (no npm/build step). Replace CONFIG.firebase
-     placeholders with your real project values before going live.
-========================================================================== -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup,
-  createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  sendPasswordResetEmail, sendEmailVerification, signOut,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getFirestore, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc,
-  collection, query, where, orderBy, onSnapshot, serverTimestamp,
-  enableIndexedDbPersistence,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {
-  getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+    <div class="space-y-3" id="loginOptions">
+      <button onclick="AUREVIA.auth.google()" class="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-full py-3 text-sm font-medium hover:border-black transition">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#111" d="M43.6 20.5H42V20.4H24v7.2h11.3c-1.6 4.6-6 7.9-11.3 7.9-6.9 0-12.5-5.6-12.5-12.5S17.1 10.5 24 10.5c3.2 0 6.1 1.2 8.3 3.2l5.1-5.1C34.1 5.5 29.3 3.5 24 3.5 12.7 3.5 3.5 12.7 3.5 24S12.7 44.5 24 44.5 44.5 35.3 44.5 24c0-1.2-.1-2.4-.3-3.5z"/></svg>
+        Continue with Google
+      </button>
+      <button onclick="AUREVIA.auth.facebook()" class="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-full py-3 text-sm font-medium hover:border-black transition">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#111"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06C2 17.06 5.66 21.2 10.44 22v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.91h-2.33V22C18.34 21.2 22 17.06 22 12.06Z"/></svg>
+        Continue with Facebook
+      </button>
+      <button onclick="AUREVIA.ui.showEmailLogin()" class="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-full py-3 text-sm font-medium hover:border-black transition">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+        Continue with Email
+      </button>
+      <button onclick="AUREVIA.ui.showPhoneLogin()" class="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-full py-3 text-sm font-medium hover:border-black transition">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+        Continue with Phone OTP
+      </button>
+    </div>
 
-/* ==========================================================================
-   1. CONFIG — every placeholder value the app needs, in one object.
-   Replace these before deploying for real. Nothing secret (payment
-   gateway SECRET key, webhook secret) ever belongs here — those live only
-   on a real backend (see the "BACKEND REFERENCE" comment block at the
-   very bottom of this file).
-========================================================================== */
-const CONFIG = {
-  companyName: "Arctic Esports",
+    <!-- Email login form (hidden by default) -->
+    <div id="emailLoginForm" class="hide mt-5 space-y-2">
+      <input id="emailInput" type="email" placeholder="Email address" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-black outline-none">
+      <input id="passInput" type="password" placeholder="Password" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-black outline-none">
+      <div class="flex gap-2">
+        <button onclick="AUREVIA.auth.emailSignIn()" class="flex-1 btn-solid rounded-full py-3 text-sm">Sign In</button>
+        <button onclick="AUREVIA.auth.emailSignUp()" class="flex-1 btn-outline rounded-full py-3 text-sm">Create Account</button>
+      </div>
+      <button onclick="AUREVIA.ui.showLoginOptions()" class="w-full text-xs text-gray-500 pt-2">← back</button>
+    </div>
 
-  firebase: {
+    <!-- Phone OTP form (hidden by default) -->
+    <div id="phoneLoginForm" class="hide mt-5 space-y-2">
+      <input id="phoneInput" type="tel" placeholder="+91 98765 43210" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-black outline-none">
+      <button onclick="AUREVIA.auth.sendOtp()" class="w-full btn-solid rounded-full py-3 text-sm">Send OTP</button>
+      <div id="otpStep" class="hide space-y-2 pt-2">
+        <input id="otpInput" type="text" placeholder="Enter 6-digit OTP" class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:border-black outline-none">
+        <button onclick="AUREVIA.auth.verifyOtp()" class="w-full btn-solid rounded-full py-3 text-sm">Verify & Continue</button>
+      </div>
+      <button onclick="AUREVIA.ui.showLoginOptions()" class="w-full text-xs text-gray-500 pt-2">← back</button>
+      <div id="recaptcha-container"></div>
+    </div>
+
+    <p id="loginError" class="text-xs text-red-600 mt-3 text-center hide"></p>
+    <p class="text-[11px] text-gray-400 text-center mt-6">By continuing you agree to our Terms of Service & Privacy Policy.</p>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAIN APP (hidden until authenticated)
+     ============================================================ -->
+<div id="app" class="hide">
+
+  <!-- Announcement bar -->
+  <div class="bg-black text-white text-[11px] sm:text-xs text-center py-2 tracking-wide font-medium">
+    FREE SHIPPING — Free Shipping on orders above ₹999
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-[var(--grey-line)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <button aria-label="Open menu" onclick="AUREVIA.ui.openDrawer()" class="p-2 -ml-2">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <a href="#/home" class="flex items-center">
+        <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650" alt="Aurevia" class="h-8 object-contain">
+      </a>
+      <div class="flex items-center gap-1">
+        <button aria-label="Search" onclick="AUREVIA.ui.openSearch()" class="p-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </button>
+        <button aria-label="Cart" onclick="AUREVIA.ui.openCart()" class="p-2 relative">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 2H2"/><circle cx="9" cy="20" r="1.4" fill="#111"/><circle cx="17" cy="20" r="1.4" fill="#111"/></svg>
+          <span id="cartBadge" class="hide absolute -top-1 -right-1 bg-black text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page mount point -->
+  <main id="pageRoot" class="view min-h-[60vh]"></main>
+
+  <!-- Footer -->
+  <footer class="bg-[var(--grey)] mt-24 border-t border-[var(--grey-line)]">
+    <div class="max-w-7xl mx-auto px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
+      <div class="col-span-2 md:col-span-1">
+        <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650" class="h-8 mb-4 object-contain" alt="Aurevia">
+        <p class="text-gray-500 text-xs leading-relaxed">Premium sports jerseys and apparel, delivered PAN India.</p>
+      </div>
+      <div>
+        <h4 class="font-medium mb-3 text-xs tracking-wider uppercase text-gray-500">Policies</h4>
+        <ul class="space-y-2 text-gray-700">
+          <li><a href="#/terms" class="hover:underline">Terms of Service</a></li>
+          <li><a href="#/privacy" class="hover:underline">Privacy Policy</a></li>
+          <li><a href="#/shipping" class="hover:underline">Shipping Policy</a></li>
+          <li><a href="#/return" class="hover:underline">Return Policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-medium mb-3 text-xs tracking-wider uppercase text-gray-500">Company</h4>
+        <ul class="space-y-2 text-gray-700">
+          <li><a href="#/about" class="hover:underline">About Us</a></li>
+          <li><a href="#/contact" class="hover:underline">Contact Us</a></li>
+          <li><a href="#/products/all" class="hover:underline">Explore All Products</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-medium mb-3 text-xs tracking-wider uppercase text-gray-500">Connect</h4>
+        <div class="flex gap-3 mb-4">
+          <a href="https://instagram.com/um3rx70" target="_blank" aria-label="Instagram" class="p-2 border border-gray-300 rounded-full hover:border-black"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
+          <a href="https://wa.me/917385009275" target="_blank" aria-label="WhatsApp" class="p-2 border border-gray-300 rounded-full hover:border-black"><svg width="16" height="16" viewBox="0 0 24 24" fill="#111"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.3-.9-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8 0-1.3.7-2 1-2.3.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.6.7 1.9.8 2 .1.2.1.4 0 .6-.1.2-.2.3-.4.5-.2.2-.4.4-.2.7.2.3.9 1.5 2 2.4 1.4 1.2 2.5 1.6 2.8 1.7.3.1.5.1.7-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.7-.1.3.1 1.8.9 2.1 1 .3.2.5.2.6.3.1.2.1.9-.1 1.5z"/></svg></a>
+          <a href="tel:+917385009275" aria-label="Call" class="p-2 border border-gray-300 rounded-full hover:border-black"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.8.6 2.7a2 2 0 01-.4 2.1L8.1 9.7a16 16 0 006 6l1.2-1.2a2 2 0 012.1-.4c.9.3 1.8.5 2.7.6a2 2 0 011.9 2.2z"/></svg></a>
+        </div>
+        <p class="text-xs text-gray-500">7385009275</p>
+      </div>
+    </div>
+    <div class="border-t border-[var(--grey-line)]">
+      <div class="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+        <span>© 2026 AUREVIA CLOTHING. All Rights Reserved.</span>
+        <div class="flex items-center gap-3 opacity-70">
+          <span class="border border-gray-300 rounded px-2 py-0.5 text-[10px]">UPI</span>
+          <span class="border border-gray-300 rounded px-2 py-0.5 text-[10px]">CARDS</span>
+          <span class="border border-gray-300 rounded px-2 py-0.5 text-[10px]">NET BANKING</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- ============================================================
+     Hamburger drawer (left)
+     ============================================================ -->
+<div id="drawerOverlay" class="overlay fixed inset-0 bg-black/40 z-[70]" onclick="AUREVIA.ui.closeDrawer()"></div>
+<div id="drawer" class="panel panel-left fixed top-0 left-0 h-full w-72 bg-white z-[80] p-6 flex flex-col">
+  <div class="flex items-center justify-between mb-8">
+    <img src="https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650" class="h-7 object-contain" alt="Aurevia">
+    <button onclick="AUREVIA.ui.closeDrawer()" aria-label="Close menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+  </div>
+  <nav class="flex flex-col gap-1 text-lg font-display">
+    <a href="#/home" onclick="AUREVIA.ui.closeDrawer()" class="py-3 border-b border-[var(--grey-line)]">Home</a>
+    <a href="#/products/all" onclick="AUREVIA.ui.closeDrawer()" class="py-3 border-b border-[var(--grey-line)]">Explore All Products</a>
+    <a href="#/about" onclick="AUREVIA.ui.closeDrawer()" class="py-3 border-b border-[var(--grey-line)]">About Us</a>
+  </nav>
+  <div class="mt-auto text-xs text-gray-400">
+    <button onclick="AUREVIA.auth.signOut()" class="underline">Sign out</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     Search panel (right)
+     ============================================================ -->
+<div id="searchOverlay" class="overlay fixed inset-0 bg-black/40 z-[70]" onclick="AUREVIA.ui.closeSearch()"></div>
+<div id="searchPanel" class="panel fixed top-0 right-0 h-full w-full sm:w-96 bg-white z-[80] p-6 flex flex-col">
+  <div class="flex items-center gap-3 mb-6">
+    <input id="searchInput" oninput="AUREVIA.search.run(this.value)" type="text" placeholder="Search products, categories..." class="flex-1 border-b border-black py-2 outline-none text-lg font-display">
+    <button onclick="AUREVIA.ui.closeSearch()" aria-label="Close search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div id="searchResults" class="flex-1 overflow-y-auto space-y-3"></div>
+</div>
+
+<!-- ============================================================
+     Cart drawer (right)
+     ============================================================ -->
+<div id="cartOverlay" class="overlay fixed inset-0 bg-black/40 z-[70]" onclick="AUREVIA.ui.closeCart()"></div>
+<div id="cartPanel" class="panel fixed top-0 right-0 h-full w-full sm:w-96 bg-white z-[80] flex flex-col">
+  <div class="flex items-center justify-between p-6 border-b border-[var(--grey-line)]">
+    <h3 class="font-display text-xl">Your Cart</h3>
+    <button onclick="AUREVIA.ui.closeCart()" aria-label="Close cart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div id="cartItems" class="flex-1 overflow-y-auto p-6 space-y-5"></div>
+  <div class="p-6 border-t border-[var(--grey-line)]">
+    <div class="flex justify-between text-sm mb-4"><span>Subtotal</span><strong id="cartSubtotal">₹0</strong></div>
+    <button onclick="AUREVIA.ui.goToCartPage()" class="w-full btn-outline rounded-full py-3 text-sm mb-2">View Cart</button>
+    <button onclick="AUREVIA.checkout.buyCart()" class="w-full btn-solid rounded-full py-3 text-sm">Checkout</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     Size guide popup
+     ============================================================ -->
+<div id="sizeGuideOverlay" class="overlay fixed inset-0 bg-black/60 z-[90] flex items-center justify-center px-4" onclick="AUREVIA.ui.closeSizeGuide(event)">
+  <div class="bg-white rounded-2xl max-w-md w-full p-5 relative" onclick="event.stopPropagation()">
+    <button onclick="AUREVIA.ui.closeSizeGuide()" class="absolute top-3 right-3" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <h3 class="font-display text-lg mb-3">Size Guide</h3>
+    <div class="relative overflow-hidden rounded-lg bg-[var(--grey)]" style="aspect-ratio:4/5;">
+      <img id="sizeGuideImg" class="w-full h-full object-contain gallery-slide" src="" alt="Size guide">
+    </div>
+    <div class="flex justify-between mt-3">
+      <button onclick="AUREVIA.ui.sizeGuideNav(-1)" class="btn-outline rounded-full px-4 py-2 text-xs">← Prev</button>
+      <span id="sizeGuideCount" class="text-xs text-gray-500 self-center"></span>
+      <button onclick="AUREVIA.ui.sizeGuideNav(1)" class="btn-outline rounded-full px-4 py-2 text-xs">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-black text-white text-sm px-5 py-3 rounded-full z-[100] shadow-lg"></div>
+
+<script>
+/* ============================================================
+   AUREVIA CLOTHING — application script
+   Everything (state, routing, firebase, cart, rendering) lives
+   in this single module-scoped object to keep globals clean.
+   ============================================================ */
+const AUREVIA = (function(){
+
+  /* ---------- Firebase ---------- */
+  const firebaseConfig = {
     apiKey: "AIzaSyAZHTAqgm-NLw-IHLiyhqMEHVQNSCwHATA",
     authDomain: "genz-food-login.firebaseapp.com",
     projectId: "genz-food-login",
     storageBucket: "genz-food-login.firebasestorage.app",
     messagingSenderId: "729506686882",
     appId: "1:729506686882:web:8e5029f9eaa9be085bb4fb",
-    measurementId: "G-X688SG8DB1",
-  },
+    measurementId: "G-X688SG8DB1"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const fbAuth = firebase.auth();
+  const db = firebase.firestore();
 
-  // Payment gateway: swap this string + the two functions marked
-  // "GATEWAY INTEGRATION POINT" below to move from Razorpay to
-  // PayU/Cashfree/PhonePe — nothing else in the booking flow changes.
-  paymentGateway: "razorpay", // 'razorpay' | 'payu' | 'cashfree' | 'phonepe'
-  razorpayKeyId: "rzp_test_TIEGKXgzYV0NvR", // PUBLIC key ID only — safe for frontend. This is a TEST key: real cards won't be charged and test-mode payments only work with Razorpay's test card numbers. Swap for your live key ID when you're ready to accept real money.
-  backendBaseUrl: "YOUR_BACKEND_BASE_URL", // e.g. Cloud Functions base URL — see bottom-of-file backend reference
-
-  contact: {
-    primary: "7385009275",
-    alternate: "9145214555",
-    supportEmail: "YOUR_SUPPORT_EMAIL",
-  },
-  social: { instagram: "YOUR_SOCIAL_LINKS", youtube: "YOUR_SOCIAL_LINKS", discord: "YOUR_SOCIAL_LINKS" },
-  branding: { logo: "YOUR_LOGO", favicon: "YOUR_FAVICON", heroImage: "YOUR_HERO_IMAGE", qrImage: "YOUR_QR_IMAGE" },
-
-  // Fallbacks only — each Daily Grind slot and each Tournament carries its
-  // OWN WhatsApp group link (editable per-item in the Admin Panel — see
-  // DEFAULT_SLOTS / DEFAULT_TOURNAMENTS below and the "whatsappGroup" field
-  // on each scrims/{id} and tournaments/{id} Firestore document). This
-  // object only covers links that aren't tied to a single item.
-  whatsappFallback: {
-    community: "YOUR_COMMUNITY_GROUP_LINK", // homepage "Join Our WhatsApp Community" button
-    weekly_war: "YOUR_WEEKLY_GROUP_LINK",
-    weekend_war: "YOUR_WEEKEND_GROUP_LINK",
-    default: "YOUR_WHATSAPP_GROUP_LINK", // used only if a specific slot/tournament link isn't set yet
-  },
-
-  // Display-only defaults — the real fee used at checkout must be looked
-  // up server-side (see backend reference) so nobody can pay ₹1 by
-  // editing the page.
-  fees: { dailyGrind: 60, weeklyWar: 150, weekendWar: 150 },
-
-  // adminUid/adminEmail here are informational only — they don't grant
-  // access by themselves. Real admin access comes from a Firestore doc at
-  // users/{uid} with role: "admin" (see README notes in chat / bottom of
-  // file). Fill in adminUid once you've created the Firebase Auth account.
-  adminUid: "YOUR_ADMIN_UID",
-  adminEmail: "umertakildar70@gmail.com",
-  adminWhatsappNumber: "7385009275",
-};
-
-/* ==========================================================================
-   2. FIREBASE INIT
-========================================================================== */
-const fbApp = initializeApp(CONFIG.firebase);
-const auth = getAuth(fbApp);
-const db = getFirestore(fbApp);
-const storage = getStorage(fbApp);
-
-enableIndexedDbPersistence(db).catch((err) => {
-  console.warn("Offline persistence unavailable:", err.code);
-});
-
-/* ==========================================================================
-   3. STATE
-========================================================================== */
-let currentUser = null;
-let authReady = false;
-let isAdminChecked = false;
-let isAdminUser = false;
-
-/* ==========================================================================
-   4. UTILITIES (validators, formatters, fuzzy search, XSS escaping)
-========================================================================== */
-function escapeHtml(value) {
-  const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  return String(value ?? "").replace(/[&<>"']/g, (ch) => map[ch]);
-}
-function formatCurrency(n) { return `₹${(Number(n) || 0).toLocaleString("en-IN")}`; }
-function toJsDate(v) { if (!v) return null; return typeof v.toDate === "function" ? v.toDate() : new Date(v); }
-function formatDateTime(v) { const d = toJsDate(v); return d ? d.toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "—"; }
-function generateReceiptNumber() { return `AE-${Date.now().toString().slice(-8)}`; }
-function withTimeout(promise, ms = 6000) {
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms)),
-  ]);
-}
-
-function validateTeamName(v) {
-  const t = (v || "").trim();
-  if (t.length < 3) return "Team name must be at least 3 characters.";
-  if (t.length > 40) return "Team name must be 40 characters or fewer.";
-  return null;
-}
-function validateMobile(v) {
-  return /^[0-9]{10}$/.test((v || "").trim()) ? null : "Mobile number must be exactly 10 digits.";
-}
-function validatePlayerName(v, label) {
-  const t = (v || "").trim();
-  if (t.length < 3) return `${label} must be at least 3 characters.`;
-  if (t.length > 40) return `${label} must be 40 characters or fewer.`;
-  return null;
-}
-
-function levenshtein(a, b) {
-  const m = a.length, n = b.length;
-  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++)
-    dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
-  return dp[m][n];
-}
-function fuzzyScore(q, t) { q = q.toLowerCase(); t = t.toLowerCase(); return t.includes(q) ? 0 : levenshtein(q, t); }
-
-const PAGE_SEARCH_INDEX = [
-  { title: "Daily Grind Scrims", url: "#/daily-grind", keywords: ["daily", "grind", "scrims", "showdowns"] },
-  { title: "Weekly War", url: "#/weekly-war", keywords: ["weekly", "war", "week"] },
-  { title: "Weekend War", url: "#/weekend-war", keywords: ["weekend", "war", "week"] },
-  { title: "Upcoming Tournaments", url: "#/tournaments", keywords: ["tournament", "upcoming", "week"] },
-  { title: "Contact Us", url: "#/contact", keywords: ["contact", "support", "phone"] },
-  { title: "About Us", url: "#/about", keywords: ["about", "company"] },
-  { title: "My Orders", url: "#/orders", keywords: ["orders", "registrations", "history"] },
-];
-
-/* ==========================================================================
-   5. ROUTER — hash-based SPA routing: "#/route?key=value&..."
-========================================================================== */
-function parseHash() {
-  const raw = window.location.hash.replace(/^#\/?/, "");
-  const [path, qs] = raw.split("?");
-  const params = Object.fromEntries(new URLSearchParams(qs || ""));
-  return { path: path || "home", params };
-}
-function navigate(pathWithQuery) { window.location.hash = `#/${pathWithQuery}`; }
-function buildHash(path, params = {}) {
-  const clean = Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== ""));
-  const qs = new URLSearchParams(clean).toString();
-  return qs ? `${path}?${qs}` : path;
-}
-
-const PROTECTED_ROUTES = new Set(["payment", "register", "orders", "profile"]);
-
-function rememberReturnTo() { sessionStorage.setItem("arctic_return_to", window.location.hash); }
-function consumeReturnTo() {
-  const dest = sessionStorage.getItem("arctic_return_to") || "#/home";
-  sessionStorage.removeItem("arctic_return_to");
-  window.location.hash = dest;
-}
-
-/* ==========================================================================
-   6. SHARED LAYOUT (ticker, header, search overlay, hamburger menu, footer)
-========================================================================== */
-function layout(contentHtml, { hideChrome = false } = {}) {
-  if (hideChrome) return contentHtml;
-  return `
-    ${tickerHtml()}
-    ${announcementBarHtml()}
-    ${headerHtml()}
-    <main>${contentHtml}</main>
-    ${floatingWhatsappHtml()}
-    ${footerHtml()}
-    ${searchOverlayHtml()}
-    ${slideMenuHtml()}
-  `;
-}
-
-function tickerHtml() {
-  const messages = [
-    "🏆 Arctic Esports Daily BGMI Scrims Live",
-    "🔥 Weekly War Registrations Open",
-    "⚡ Weekend War Every Saturday",
-    "🎮 Join The Official Arctic Community",
-    "💥 Fair Play • Real Competition • Fast Registration",
+  /* ---------- Constants / placeholders ---------- */
+  const SIZE_GUIDE_IMAGES = [
+    "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/13A9F1CC-690A-4624-BACF-00C9362D4663.png?v=1785590678",
+    "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1665.jpg?v=1785590762",
+    "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1666.jpg?v=1785590762",
+    "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1665.jpg?v=1785590762",
+    "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1667.jpg?v=1785590762"
   ];
-  const row = messages.map((m) => `<span>${escapeHtml(m)}</span>`).join("");
-  return `
-    <div class="w-full h-10 bg-black overflow-hidden flex items-center" role="marquee" aria-label="Announcements">
-      <div class="flex whitespace-nowrap ticker-track">
-        <div class="flex items-center gap-10 pr-10 text-white text-sm font-medium">${row}</div>
-        <div class="flex items-center gap-10 pr-10 text-white text-sm font-medium" aria-hidden="true">${row}</div>
-      </div>
-    </div>`;
-}
-function announcementBarHtml() {
-  return `<div class="w-full bg-black text-center py-2 border-b border-white/10">
-    <span class="font-display font-bold tracking-widest text-white pulse-soft">BOOK YOUR SLOTS</span>
-  </div>`;
-}
-function headerHtml() {
-  return `
-  <header id="siteHeader" class="sticky top-0 z-40 bg-black h-[70px] flex items-center transition-shadow duration-300">
-    <div class="max-w-7xl mx-auto w-full px-4 flex items-center justify-between">
-      <button id="searchBtn" aria-label="Search" class="text-white hover:text-cyan transition-colors">
-        <i class="fa-solid fa-magnifying-glass text-xl"></i>
-      </button>
-      <a href="#/home" class="font-display font-bold text-white text-xl tracking-wide flex items-center gap-2">
-        <span class="w-8 h-8 rounded bg-gradient-to-br from-bolt to-cyan flex items-center justify-center text-black font-black text-sm">AE</span>
-        ARCTIC <span class="text-cyan">ESPORTS</span>
-      </a>
-      <div class="flex items-center gap-5">
-        <div class="relative">
-          <button id="profileBtn" aria-label="Account" class="text-white hover:text-cyan transition-colors">
-            <i class="fa-regular fa-circle-user text-xl"></i>
-          </button>
-          <div id="profileMenu" class="hidden absolute right-0 mt-3 w-44 bg-[#12141c] border border-white/10 rounded-lg shadow-xl overflow-hidden text-sm z-50"></div>
-        </div>
-        <a href="#/orders" aria-label="Orders" class="text-white hover:text-cyan transition-colors">
-          <i class="fa-solid fa-receipt text-xl"></i>
-        </a>
-        <button id="menuBtn" aria-label="Menu" class="text-white hover:text-cyan transition-colors">
-          <i class="fa-solid fa-bars text-xl"></i>
-        </button>
-      </div>
-    </div>
-  </header>`;
-}
-function searchOverlayHtml() {
-  return `
-  <div id="searchOverlay" class="hidden fixed inset-0 bg-black/90 z-50 px-4 pt-24">
-    <div class="max-w-2xl mx-auto">
-      <div class="flex items-center gap-3 border-b border-white/20 pb-4">
-        <i class="fa-solid fa-magnifying-glass text-cyan"></i>
-        <input id="searchInput" type="text" placeholder="Search scrims, tournaments, pages…" autocomplete="off"
-          class="w-full bg-transparent text-white text-xl font-display outline-none placeholder-white/40" />
-        <button id="searchClose" aria-label="Close search" class="text-white/60 hover:text-white">✕</button>
-      </div>
-      <ul id="searchResults" class="mt-6 space-y-2"></ul>
-    </div>
-  </div>`;
-}
-function slideMenuHtml() {
-  return `
-  <div id="menuOverlay" class="hidden fixed inset-0 bg-black/60 z-50"></div>
-  <nav id="slideMenu" class="fixed top-0 right-0 h-full w-72 bg-black z-50 translate-x-full transition-transform duration-300 ease-out">
-    <div class="flex justify-end p-5"><button id="menuClose" aria-label="Close menu" class="text-white/70 hover:text-white">✕</button></div>
-    <ul class="px-6 space-y-1 font-display text-lg">
-      <li><a href="#/home" class="block py-3 text-white hover:text-cyan border-b border-white/10">Home</a></li>
-      <li><a href="#/daily-grind" class="block py-3 text-white hover:text-cyan border-b border-white/10">Book Scrims Slot</a></li>
-      <li><a href="#/contact" class="block py-3 text-white hover:text-cyan border-b border-white/10">Contact Us</a></li>
-      <li><a href="#/about" class="block py-3 text-white hover:text-cyan border-b border-white/10">About Us</a></li>
-    </ul>
-  </nav>`;
-}
-function floatingWhatsappHtml() {
-  return `
-  <a href="https://wa.me/91${CONFIG.contact.primary}" target="_blank" rel="noopener" aria-label="Chat on WhatsApp"
-     class="fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-    <i class="fa-brands fa-whatsapp text-white text-3xl"></i>
-  </a>`;
-}
-function footerHtml() {
-  return `
-  <footer class="bg-black text-white pt-14 pb-8 px-4">
-    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
-      <div>
-        <h3 class="font-display font-bold text-lg">ARCTIC <span class="text-cyan">ESPORTS</span></h3>
-        <p class="text-steel text-sm mt-3">Fair BGMI scrims, tournaments and competitive events with trusted organizers and an active community.</p>
-      </div>
-      <div>
-        <h4 class="font-display font-semibold mb-3 text-cyan">Quick Links</h4>
-        <ul class="space-y-2 text-sm text-steel">
-          <li><a href="#/daily-grind" class="hover:text-white">Daily Grind Scrims</a></li>
-          <li><a href="#/weekly-war" class="hover:text-white">Weekly War</a></li>
-          <li><a href="#/weekend-war" class="hover:text-white">Weekend War</a></li>
-          <li><a href="#/tournaments" class="hover:text-white">Tournaments</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="font-display font-semibold mb-3 text-cyan">Contact</h4>
-        <ul class="space-y-2 text-sm text-steel">
-          <li><a href="tel:${CONFIG.contact.primary}" class="hover:text-white">${CONFIG.contact.primary}</a></li>
-          <li><a href="tel:${CONFIG.contact.alternate}" class="hover:text-white">${CONFIG.contact.alternate}</a></li>
-          <li><a href="#/contact" class="hover:text-white">Contact Page</a></li>
-          <li><a href="#/about" class="hover:text-white">About Us</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="font-display font-semibold mb-3 text-cyan">Follow</h4>
-        <div class="flex gap-4 text-steel text-lg">
-          <a href="${CONFIG.social.instagram}" aria-label="Instagram" class="hover:text-white"><i class="fa-brands fa-instagram"></i></a>
-          <a href="${CONFIG.social.youtube}" aria-label="YouTube" class="hover:text-white"><i class="fa-brands fa-youtube"></i></a>
-          <a href="${CONFIG.social.discord}" aria-label="Discord" class="hover:text-white"><i class="fa-brands fa-discord"></i></a>
-        </div>
-      </div>
-    </div>
-    <div class="max-w-7xl mx-auto border-t border-white/10 mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-      <div class="flex gap-4 text-steel text-xs items-center"><span>UPI</span><span>Cards</span><span>Net Banking</span></div>
-      <p class="text-steel text-xs">© 2026 ${CONFIG.companyName}. All rights reserved.</p>
-    </div>
-  </footer>`;
-}
+  const SIZES = ["S-36","M-38","L-40","XL-42","XXL-44","XXXL-46"];
+  const CATEGORIES = ["SHIRTS","JEANS","HOODIES","JACKETS","SHOES","GYM ACCESSORIES"];
+  const HERO_IMG = "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1663.jpg?v=1785589886";
+  const EOS_BANNER = "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/IMG-1592.png?v=1785393299";
+  const LOGO = "https://cdn.shopify.com/s/files/1/1037/0203/6763/files/DC9277F1-58E4-4FF8-AD1F-E49220CB8494.png?v=1785589650";
 
-/* ==========================================================================
-   7. VIEWS — each returns an HTML string; each has a matching bind*()
-   function called after the HTML is inserted into #app, to wire up events.
-========================================================================== */
+  const ADJ = ["Classic","Signature","Heritage","Urban","Essential","Element","Motion","Studio","Onyx","Ivory","Prime","Origin","Flux","Core","Apex"];
 
-// ---------------- HOME ----------------
-function homeView() {
-  return `
-  <section class="bg-black py-16 px-4">
-    <div class="max-w-lg mx-auto">
-      <div class="hud-frame aspect-square rounded-2xl overflow-hidden relative">
-        <span class="hud-tr"></span><span class="hud-bl"></span>
-        <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=900&q=80" loading="lazy" alt="BGMI competitive esports squad in a match" class="w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/20"></div>
-        <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-          <h1 class="font-display font-bold text-4xl md:text-5xl text-white leading-tight">COMPETE LIKE A<br/><span class="text-cyan">CHAMPION</span></h1>
-          <p class="text-steel mt-4 text-sm md:text-base font-display tracking-wide">Daily BGMI Scrims &nbsp;·&nbsp; Weekly War &nbsp;·&nbsp; Weekend War &nbsp;·&nbsp; Professional Tournaments</p>
-          <a href="#/daily-grind" class="ripple glow-blue mt-8 inline-block bg-bolt text-white font-display font-semibold tracking-wide px-8 py-3 rounded-full">BOOK SCRIMS</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="max-w-7xl mx-auto px-4 py-16">
-    <h2 class="font-display font-bold text-3xl text-center mb-10">Choose Your Battlefield</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <a href="#/daily-grind" class="hud-frame fade-up group bg-[#12141c] rounded-2xl shadow-sm hover:shadow-xl border border-white/10 hover:border-bolt transition-all overflow-hidden">
-        <span class="hud-tr"></span><span class="hud-bl"></span>
-        <img src="https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=600&q=80" loading="lazy" alt="Daily Grind Scrims" class="h-40 w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div class="p-5"><h3 class="font-display font-bold text-lg">Daily Grind Scrims</h3>
-        <p class="text-steel text-sm mt-1">Six slots a day, ${formatCurrency(CONFIG.fees.dailyGrind)} entry.</p>
-        <span class="inline-block mt-4 text-cyan font-display font-semibold text-sm">Book Now →</span></div>
-      </a>
-      <a href="#/weekly-war" class="hud-frame fade-up group bg-[#12141c] rounded-2xl shadow-sm hover:shadow-xl border border-white/10 hover:border-bolt transition-all overflow-hidden">
-        <span class="hud-tr"></span><span class="hud-bl"></span>
-        <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80" loading="lazy" alt="Weekly War" class="h-40 w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div class="p-5"><h3 class="font-display font-bold text-lg">Weekly War</h3>
-        <p class="text-steel text-sm mt-1">One high-stakes match every week.</p>
-        <span class="inline-block mt-4 text-cyan font-display font-semibold text-sm">Book Now →</span></div>
-      </a>
-      <a href="#/weekend-war" class="hud-frame fade-up group bg-[#12141c] rounded-2xl shadow-sm hover:shadow-xl border border-white/10 hover:border-bolt transition-all overflow-hidden">
-        <span class="hud-tr"></span><span class="hud-bl"></span>
-        <img src="https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=600&q=80" loading="lazy" alt="Weekend War" class="h-40 w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div class="p-5"><h3 class="font-display font-bold text-lg">Weekend War</h3>
-        <p class="text-steel text-sm mt-1">Competitive weekend battles.</p>
-        <span class="inline-block mt-4 text-cyan font-display font-semibold text-sm">Book Now →</span></div>
-      </a>
-      <a href="#/tournaments" class="hud-frame fade-up group bg-[#12141c] rounded-2xl shadow-sm hover:shadow-xl border border-white/10 hover:border-bolt transition-all overflow-hidden">
-        <span class="hud-tr"></span><span class="hud-bl"></span>
-        <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80" loading="lazy" alt="Upcoming Tournaments" class="h-40 w-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div class="p-5"><h3 class="font-display font-bold text-lg">Upcoming Tournaments</h3>
-        <p class="text-steel text-sm mt-1">Full-squad tournaments, real prize pools.</p>
-        <span class="inline-block mt-4 text-cyan font-display font-semibold text-sm">Book Now →</span></div>
-      </a>
-    </div>
-  </section>
-
-  <section class="bg-black py-16 px-4 text-center">
-    <h2 class="font-display font-bold text-3xl text-white">Join Our WhatsApp Community</h2>
-    <p class="text-steel mt-3 max-w-md mx-auto">Stay updated with daily scrims, tournaments, announcements and exclusive esports events.</p>
-    <a href="${CONFIG.whatsappFallback.community}" target="_blank" rel="noopener" class="ripple glow-blue inline-block mt-6 bg-bolt text-white font-display font-bold tracking-wide px-8 py-3 rounded-full">JOIN NOW</a>
-  </section>
-
-  <section class="max-w-3xl mx-auto px-4 py-16">
-    <h2 class="font-display font-bold text-3xl text-center mb-10">Frequently Asked Questions</h2>
-    <div class="space-y-3" id="faqList">
-      ${faqItemHtml("How do I book a BGMI scrim slot?", "Login, choose a slot, complete payment and join the WhatsApp group.")}
-      ${faqItemHtml("Can I cancel my booking?", "Bookings are generally non-refundable unless the organizer announces otherwise.")}
-      ${faqItemHtml("How will I receive the room details?", "Room details will be shared in the official WhatsApp group before the match.")}
-      ${faqItemHtml("What happens after successful payment?", "Your registration is confirmed automatically and you'll receive access to the match group.")}
-    </div>
-  </section>`;
-}
-function faqItemHtml(q, a) {
-  return `
-  <div class="faq-item border border-white/10 rounded-xl overflow-hidden">
-    <button class="faq-q w-full text-left px-5 py-4 flex justify-between items-center font-display font-semibold">
-      ${escapeHtml(q)}<span class="faq-icon transition-transform">+</span>
-    </button>
-    <div class="faq-a hidden px-5 pb-4 text-steel text-sm">${escapeHtml(a)}</div>
-  </div>`;
-}
-function bindHomeView() {
-  document.querySelectorAll(".faq-q").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const ans = btn.nextElementSibling;
-      const icon = btn.querySelector(".faq-icon");
-      const isOpen = !ans.classList.contains("hidden");
-      document.querySelectorAll(".faq-a").forEach((a) => a.classList.add("hidden"));
-      document.querySelectorAll(".faq-icon").forEach((i) => (i.style.transform = "rotate(0deg)"));
-      if (!isOpen) { ans.classList.remove("hidden"); icon.style.transform = "rotate(45deg)"; }
-    });
-  });
-}
-
-// ---------------- DAILY GRIND ----------------
-const DEFAULT_SLOTS = [
-  { id: "1pm-3pm", label: "1 PM - 3 PM", fee: CONFIG.fees.dailyGrind, whatsappGroup: "YOUR_WHATSAPP_GROUP_LINK_1PM_3PM" },
-  { id: "3pm-5pm", label: "3 PM - 5 PM", fee: CONFIG.fees.dailyGrind, whatsappGroup: "YOUR_WHATSAPP_GROUP_LINK_3PM_5PM" },
-  { id: "5pm-7pm", label: "5 PM - 7 PM", fee: CONFIG.fees.dailyGrind, whatsappGroup: "YOUR_WHATSAPP_GROUP_LINK_5PM_7PM" },
-  { id: "7pm-9pm", label: "7 PM - 9 PM", fee: CONFIG.fees.dailyGrind, whatsappGroup: "YOUR_WHATSAPP_GROUP_LINK_7PM_9PM" },
-  { id: "9pm-11pm", label: "9 PM - 11 PM", fee: CONFIG.fees.dailyGrind, whatsappGroup: "YOUR_WHATSAPP_GROUP_LINK_9PM_11PM" },
-  { id: "11pm-1am", label: "11 PM - 1 AM", fee: CONFIG.fees.dailyGrind, whatsappGroup: "YOUR_WHATSAPP_GROUP_LINK_11PM_1AM" },
-];
-function slotCardHtml(s) {
-  return `
-    <div class="hud-frame bg-[#12141c] rounded-2xl shadow-sm border border-white/10 hover:border-bolt transition-colors p-5 flex flex-col justify-between ${s.isActive === false ? "opacity-50" : ""}">
-      <span class="hud-tr"></span><span class="hud-bl"></span>
-      <div><p class="font-display font-bold text-xl">${escapeHtml(s.label)}</p>
-      <p class="text-steel text-sm mt-1 font-mono">Entry ${formatCurrency(s.fee)}</p></div>
-      <button data-slot="${s.id}" data-label="${escapeHtml(s.label)}" data-fee="${s.fee}"
-        class="book-btn glow-blue mt-4 bg-bolt text-white font-display font-semibold py-2.5 rounded-lg transition-shadow disabled:opacity-40"
-        ${s.isActive === false ? "disabled" : ""}>${s.isActive === false ? "Closed" : "Book Slot"}</button>
-    </div>`;
-}
-function bindSlotButtons(grid) {
-  grid.querySelectorAll(".book-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const { slot, label, fee } = btn.dataset;
-      guardBooking(buildHash("payment", { category: "daily-grind", categoryLabel: "Daily Grind Scrims", slot, slotLabel: label, fee }));
-    });
-  });
-}
-function dailyGrindView() {
-  return `
-  ${bannerHtml("SHOWDOWNS", "Book your preferred BGMI scrim slot below.", "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=1200&q=80")}
-  <section class="max-w-5xl mx-auto px-4 py-12">
-    <div id="slotsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">${DEFAULT_SLOTS.map(slotCardHtml).join("")}</div>
-  </section>`;
-}
-function bannerHtml(title, subtitle, img) {
-  return `
-  <section class="relative h-64 md:h-80 bg-black overflow-hidden">
-    <img src="${img}" loading="lazy" alt="${escapeHtml(title)} banner" class="w-full h-full object-cover opacity-60" />
-    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
-    <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-      <h1 class="font-display font-bold text-4xl md:text-5xl text-white tracking-wide">${escapeHtml(title)}</h1>
-      <p class="text-steel mt-2">${escapeHtml(subtitle)}</p>
-    </div>
-  </section>`;
-}
-async function bindDailyGrindView() {
-  const grid = document.getElementById("slotsGrid");
-  bindSlotButtons(grid); // defaults are already visible — wire them up right away
-
-  try {
-    const snap = await withTimeout(getDocs(query(collection(db, "scrims"), where("category", "==", "daily-grind"))), 5000);
-    if (!snap.empty) {
-      const slots = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      grid.innerHTML = slots.map(slotCardHtml).join("");
-      bindSlotButtons(grid);
+  /* ---------- Generate placeholder product catalog (223 products) ----------
+     33 products per category x 6 categories = 198
+     + 25 "End Of Season Sale" products
+     Image count per product varies (2 or 3) — never hardcoded. */
+  function makeProduct(id, category, idx){
+    const name = `${ADJ[idx % ADJ.length]} ${category.charAt(0)+category.slice(1).toLowerCase()} ${idx+1}`;
+    const imgCount = 2 + (idx % 2); // alternates 2,3 images
+    const images = [];
+    for(let i=0;i<imgCount;i++){
+      images.push(`https://picsum.photos/seed/aurevia-${id}-${i}/900/1125`);
     }
-  } catch { /* offline, slow, or not configured yet — the defaults already shown are fine */ }
-}
-
-
-// ---------------- WEEKLY / WEEKEND WAR ----------------
-function warView(category, title, subtitle, img, fee) {
-  return `
-  ${bannerHtml(title, subtitle, img)}
-  <section class="max-w-md mx-auto px-4 py-12">
-    <div class="bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-6 text-center">
-      <p class="text-steel text-sm font-display tracking-wide">ENTRY FEE</p>
-      <p class="font-display font-bold text-4xl mt-1">${formatCurrency(fee)}</p>
-      <button id="bookWarBtn" data-category="${category}" data-label="${escapeHtml(title === "WEEKLY WAR" ? "Weekly War" : "Weekend War")}" data-fee="${fee}"
-        class="glow-blue w-full mt-6 bg-bolt text-white font-display font-bold py-3 rounded-lg transition-shadow">BOOK ${escapeHtml(title)}</button>
-    </div>
-  </section>`;
-}
-function weeklyWarView() { return warView("weekly-war", "WEEKLY WAR", "Compete against the best BGMI teams every week.", "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&q=80", CONFIG.fees.weeklyWar); }
-function weekendWarView() { return warView("weekend-war", "WEEKEND WAR", "Weekend competitive BGMI battles.", "https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=1200&q=80", CONFIG.fees.weekendWar); }
-function bindWarView() {
-  const btn = document.getElementById("bookWarBtn");
-  if (!btn) return;
-  btn.addEventListener("click", () => {
-    const { category, label, fee } = btn.dataset;
-    guardBooking(buildHash("payment", { category, categoryLabel: label, fee }));
-  });
-}
-
-// ---------------- TOURNAMENTS ----------------
-const DEFAULT_TOURNAMENTS = [
-  { id: "t1", title: "Arctic Clash Cup", startDate: "Aug 9, 2026", entryFee: 300, poster: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80", description: "Full-squad knockout bracket, 32 teams.", whatsappGroup: "YOUR_WHATSAPP_GROUP_LINK_ARCTIC_CLASH_CUP" },
-  { id: "t2", title: "Frostbite Invitational", startDate: "Aug 16, 2026", entryFee: 400, poster: "https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=600&q=80", description: "Points-based league across three maps.", whatsappGroup: "YOUR_WHATSAPP_GROUP_LINK_FROSTBITE_INVITATIONAL" },
-  { id: "t3", title: "Glacier Grand Finals", startDate: "Aug 23, 2026", entryFee: 500, poster: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80", description: "Top 16 teams, winner-take-most prize pool.", whatsappGroup: "YOUR_WHATSAPP_GROUP_LINK_GLACIER_GRAND_FINALS" },
-  { id: "t4", title: "North Star Series", startDate: "Aug 30, 2026", entryFee: 250, poster: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=600&q=80", description: "Beginner-friendly bracket for rising squads.", whatsappGroup: "YOUR_WHATSAPP_GROUP_LINK_NORTH_STAR_SERIES" },
-  { id: "t5", title: "Polar Championship", startDate: "Sep 6, 2026", entryFee: 600, poster: "https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=600&q=80", description: "Flagship monthly championship, official casters.", whatsappGroup: "YOUR_WHATSAPP_GROUP_LINK_POLAR_CHAMPIONSHIP" },
-];
-function tournamentCardHtml(t) {
-  return `
-    <div class="hud-frame bg-[#12141c] rounded-2xl shadow-sm border border-white/10 hover:border-bolt transition-colors overflow-hidden flex flex-col">
-      <span class="hud-tr"></span><span class="hud-bl"></span>
-      <img src="${t.poster}" loading="lazy" alt="${escapeHtml(t.title)} poster" class="h-40 w-full object-cover" />
-      <div class="p-5 flex flex-col flex-1">
-        <h3 class="font-display font-bold text-lg">${escapeHtml(t.title)}</h3>
-        <p class="text-steel text-xs mt-1 font-mono">${escapeHtml(t.startDate || "")}</p>
-        <p class="text-steel text-sm mt-2 flex-1">${escapeHtml(t.description || "")}</p>
-        <p class="font-display font-semibold text-sm mt-3">Entry ${formatCurrency(t.entryFee)}</p>
-        <a href="#/${buildHash("tournament-registration", { id: t.id, name: t.title, fee: t.entryFee, poster: t.poster })}"
-           class="glow-blue mt-4 text-center bg-bolt text-white font-display font-semibold py-2.5 rounded-lg transition-shadow">Register Now</a>
-      </div>
-    </div>`;
-}
-function tournamentsView() {
-  return `
-  <section class="max-w-6xl mx-auto px-4 py-12">
-    <h1 class="font-display font-bold text-3xl text-center mb-10">Upcoming BGMI Tournaments</h1>
-    <div id="tournamentsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">${DEFAULT_TOURNAMENTS.map(tournamentCardHtml).join("")}</div>
-  </section>`;
-}
-async function bindTournamentsView() {
-  const grid = document.getElementById("tournamentsGrid");
-  try {
-    const snap = await withTimeout(getDocs(query(collection(db, "tournaments"), orderBy("startDate"))), 5000);
-    if (!snap.empty) grid.innerHTML = snap.docs.map((d) => tournamentCardHtml({ id: d.id, ...d.data() })).join("");
-  } catch { /* offline, slow, or not configured yet — the defaults already shown are fine */ }
-}
-
-// ---------------- TOURNAMENT REGISTRATION ----------------
-function tournamentRegistrationView(params) {
-  const { id = "", name = "Arctic Esports Tournament", fee = "0", poster = "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200&q=80" } = params;
-  return `
-  <section class="relative h-48 bg-black overflow-hidden">
-    <img src="${poster}" loading="lazy" alt="Tournament banner" class="w-full h-full object-cover opacity-60" />
-    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
-    <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-      <h1 class="font-display font-bold text-3xl text-white">${escapeHtml(name)}</h1>
-      <p class="text-cyan font-display font-semibold mt-1">Entry ${formatCurrency(fee)}</p>
-    </div>
-  </section>
-  <section class="max-w-2xl mx-auto px-4 py-10">
-    <form id="tRegForm" class="bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-6 space-y-5">
-      <div id="tRegError" class="hidden text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3"></div>
-      <div><label class="text-xs font-display tracking-wide text-steel">TEAM NAME</label>
-        <input name="teamName" class="mt-1 w-full bg-white/5 border border-white/10 focus:border-cyan outline-none rounded-lg px-4 py-3 text-white placeholder-white/30" placeholder="e.g. Arctic Wolves" /></div>
-      <div><label class="text-xs font-display tracking-wide text-steel">MOBILE NUMBER</label>
-        <input name="mobileNumber" maxlength="10" inputmode="numeric" class="mt-1 w-full bg-white/5 border border-white/10 focus:border-cyan outline-none rounded-lg px-4 py-3 text-white placeholder-white/30" placeholder="10-digit mobile number" /></div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        ${[1,2,3,4].map((n) => `<div><label class="text-xs font-display tracking-wide text-steel">PLAYER ${n} NAME</label>
-          <input name="player${n}" class="mt-1 w-full bg-white/5 border border-white/10 focus:border-cyan outline-none rounded-lg px-4 py-3 text-white placeholder-white/30" /></div>`).join("")}
-      </div>
-      <div><label class="text-xs font-display tracking-wide text-steel">SUBSTITUTE PLAYER NAME <span class="text-white/40">(optional)</span></label>
-        <input name="substitute" class="mt-1 w-full bg-white/5 border border-white/10 focus:border-cyan outline-none rounded-lg px-4 py-3 text-white placeholder-white/30" /></div>
-      <input type="hidden" name="tournamentId" value="${escapeHtml(id)}" />
-      <input type="hidden" name="tournamentName" value="${escapeHtml(name)}" />
-      <input type="hidden" name="fee" value="${escapeHtml(String(fee))}" />
-      <button type="submit" class="glow-blue w-full bg-bolt text-white font-display font-bold py-3 rounded-lg transition-shadow">Proceed To Payment</button>
-    </form>
-  </section>`;
-}
-function bindTournamentRegistrationView() {
-  const form = document.getElementById("tRegForm");
-  const errorBox = document.getElementById("tRegError");
-  let submitting = false;
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    if (submitting) return;
-    const fd = new FormData(form);
-    const data = Object.fromEntries(fd.entries());
-    const err = validateTeamName(data.teamName) || validateMobile(data.mobileNumber)
-      || validatePlayerName(data.player1, "Player 1") || validatePlayerName(data.player2, "Player 2")
-      || validatePlayerName(data.player3, "Player 3") || validatePlayerName(data.player4, "Player 4")
-      || (data.substitute && data.substitute.trim() ? validatePlayerName(data.substitute, "Substitute name") : null);
-    if (err) { errorBox.textContent = err; errorBox.classList.remove("hidden"); return; }
-    errorBox.classList.add("hidden");
-    submitting = true;
-
-    guardBooking(buildHash("payment", { category: "tournament", categoryLabel: data.tournamentName, fee: data.fee, tournamentId: data.tournamentId }), () => {
-      sessionStorage.setItem("arctic_tournament_reg", JSON.stringify(data));
-    });
-  });
-}
-
-// ---------------- AUTH GUARD HELPER ----------------
-function guardBooking(destinationHash, onAuthedExtra) {
-  if (currentUser) { if (onAuthedExtra) onAuthedExtra(); window.location.hash = `#/${destinationHash}`; return; }
-  sessionStorage.setItem("arctic_return_to", `#/${destinationHash}`);
-  window.location.hash = "#/login";
-}
-
-// ---------------- LOGIN ----------------
-function loginView() {
-  return `
-  <div class="bg-ink min-h-[calc(100vh-70px)] flex items-center justify-center px-4 py-10">
-    <div class="w-full max-w-md bg-black/60 border border-white/10 rounded-2xl p-8 shadow-2xl">
-      <div class="text-center mb-6">
-        <span class="inline-flex w-10 h-10 rounded bg-gradient-to-br from-bolt to-cyan items-center justify-center text-black font-black text-sm mb-3">AE</span>
-        <h1 class="font-display font-bold text-2xl text-white">Welcome back, warrior</h1>
-        <p class="text-steel text-sm mt-1">Login to continue your booking</p>
-      </div>
-      <div id="loginAlert" class="hidden mb-4 text-sm rounded-lg px-4 py-3"></div>
-      <div class="flex gap-6 border-b border-white/10 mb-6 font-display font-semibold text-steel">
-        <button id="tabLogin" class="pb-3 text-white border-b-2 border-cyan">Login</button>
-        <button id="tabCreate" class="pb-3">Create Account</button>
-      </div>
-      <button id="googleBtn" class="glow-blue w-full flex items-center justify-center gap-3 bg-white text-ink font-display font-semibold py-3 rounded-lg mb-5 transition-shadow">
-        <i class="fa-brands fa-google"></i> Continue with Google
-      </button>
-      <div class="flex items-center gap-3 text-steel text-xs mb-5"><div class="h-px bg-white/10 flex-1"></div>OR<div class="h-px bg-white/10 flex-1"></div></div>
-      <form id="loginForm" class="space-y-4">
-        <div><label class="text-steel text-xs font-display tracking-wide">EMAIL</label>
-          <input id="loginEmail" type="email" required class="mt-1 w-full bg-white/5 border border-white/10 focus:border-cyan outline-none rounded-lg px-4 py-3 text-white" /></div>
-        <div><label class="text-steel text-xs font-display tracking-wide">PASSWORD</label>
-          <input id="loginPassword" type="password" required minlength="6" class="mt-1 w-full bg-white/5 border border-white/10 focus:border-cyan outline-none rounded-lg px-4 py-3 text-white" /></div>
-        <div id="loginExtras" class="flex items-center justify-between text-sm">
-          <label class="flex items-center gap-2 text-steel"><input type="checkbox" checked class="accent-bolt" /> Remember me</label>
-          <button type="button" id="forgotBtn" class="text-cyan hover:underline">Forgot password?</button>
-        </div>
-        <label id="termsRow" class="hidden items-start gap-2 text-xs text-steel">
-          <input id="termsCheck" type="checkbox" class="mt-0.5 accent-bolt" /> I agree to the Terms of Service and Privacy Policy
-        </label>
-        <button type="submit" id="loginSubmit" class="glow-blue w-full bg-bolt text-white font-display font-bold py-3 rounded-lg transition-shadow flex items-center justify-center gap-2">
-          <span id="loginSubmitLabel">Login</span>
-        </button>
-      </form>
-      <p class="text-center text-steel text-xs mt-6"><a href="#/home" class="hover:text-white">← Back to Home</a></p>
-    </div>
-  </div>`;
-}
-function bindLoginView() {
-  let mode = "login";
-  const tabLogin = document.getElementById("tabLogin"), tabCreate = document.getElementById("tabCreate");
-  const submitLabel = document.getElementById("loginSubmitLabel");
-  const termsRow = document.getElementById("termsRow"), loginExtras = document.getElementById("loginExtras");
-  const alertBox = document.getElementById("loginAlert");
-
-  function setMode(next) {
-    mode = next;
-    const isCreate = mode === "create";
-    tabLogin.classList.toggle("text-white", !isCreate); tabLogin.classList.toggle("border-b-2", !isCreate); tabLogin.classList.toggle("border-cyan", !isCreate);
-    tabCreate.classList.toggle("text-white", isCreate); tabCreate.classList.toggle("border-b-2", isCreate); tabCreate.classList.toggle("border-cyan", isCreate);
-    submitLabel.textContent = isCreate ? "Create Account" : "Login";
-    termsRow.classList.toggle("hidden", !isCreate); termsRow.classList.toggle("flex", isCreate);
-    loginExtras.classList.toggle("hidden", isCreate);
-    alertBox.classList.add("hidden");
-  }
-  tabLogin.addEventListener("click", () => setMode("login"));
-  tabCreate.addEventListener("click", () => setMode("create"));
-
-  function showAlert(msg, kind = "error") {
-    alertBox.textContent = msg;
-    alertBox.className = "mb-4 text-sm rounded-lg px-4 py-3 " + (kind === "error" ? "bg-red-500/10 text-red-300 border border-red-500/30" : "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30");
-    alertBox.classList.remove("hidden");
-  }
-  function friendlyAuthError(err) {
-    if (err.message === "timeout") return "This is taking too long — check your internet connection and try again.";
-    const map = {
-      "auth/invalid-email": "That email address looks invalid.",
-      "auth/user-not-found": "No account found with that email.",
-      "auth/wrong-password": "Incorrect password.",
-      "auth/email-already-in-use": "An account already exists with that email.",
-      "auth/weak-password": "Password should be at least 6 characters.",
-      "auth/popup-closed-by-user": "Google sign-in was closed before completing.",
+    const basePrice = 799 + (idx % 12) * 150;
+    return {
+      id, name, category,
+      price: basePrice,
+      images,
+      description: `${name} — crafted for AUREVIA CLOTHING with premium fabric, a considered fit and everyday comfort. Part of our ${category.toLowerCase()} collection. Replace this placeholder description with your final product copy.`
     };
-    return map[err.code] || "Something went wrong. Please try again.";
-  }
-  async function upsertUserProfile(user, provider) {
-    const ref = doc(db, "users", user.uid);
-    const snap = await withTimeout(getDoc(ref), 10000);
-    if (!snap.exists()) {
-      await withTimeout(setDoc(ref, { uid: user.uid, name: user.displayName || "", email: user.email || "", photoURL: user.photoURL || "", phone: user.phoneNumber || "", provider, createdAt: serverTimestamp(), lastLogin: serverTimestamp() }), 10000);
-    } else {
-      await withTimeout(setDoc(ref, { lastLogin: serverTimestamp() }, { merge: true }), 10000);
-    }
   }
 
-  document.getElementById("googleBtn").addEventListener("click", async () => {
-    try {
-      const result = await withTimeout(signInWithPopup(auth, new GoogleAuthProvider()), 30000);
-      await upsertUserProfile(result.user, "google");
-      consumeReturnTo();
-    } catch (err) { showAlert(friendlyAuthError(err)); }
+  const PRODUCTS = [];
+  let pid = 1;
+  CATEGORIES.forEach(cat=>{
+    for(let i=0;i<33;i++){ PRODUCTS.push(makeProduct(pid++, cat, i)); }
   });
+  for(let i=0;i<25;i++){ PRODUCTS.push(makeProduct(pid++, "END OF SEASON SALE", i)); }
 
-  document.getElementById("forgotBtn").addEventListener("click", async () => {
-    const email = document.getElementById("loginEmail").value.trim();
-    if (!email) return showAlert('Enter your email above first, then tap "Forgot password?"');
-    try { await withTimeout(sendPasswordResetEmail(auth, email), 15000); showAlert("Password reset email sent.", "success"); }
-    catch (err) { showAlert(friendlyAuthError(err)); }
-  });
+  function fmtPrice(n){ return "₹" + n.toLocaleString("en-IN"); }
+  function productById(id){ return PRODUCTS.find(p=>String(p.id)===String(id)); }
 
-  document.getElementById("loginForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value;
-    const submitBtn = document.getElementById("loginSubmit");
-    submitBtn.disabled = true; submitLabel.innerHTML = '<span class="spinner"></span>';
-    try {
-      if (mode === "create") {
-        if (!document.getElementById("termsCheck").checked) throw { code: "terms" };
-        const result = await withTimeout(createUserWithEmailAndPassword(auth, email, password), 15000);
-        await withTimeout(sendEmailVerification(result.user), 15000);
-        await upsertUserProfile(result.user, "password");
-        showAlert("Account created — verification email sent. You can continue now.", "success");
-      } else {
-        const result = await withTimeout(signInWithEmailAndPassword(auth, email, password), 15000);
-        await upsertUserProfile(result.user, "password");
-      }
-      consumeReturnTo();
-    } catch (err) {
-      submitBtn.disabled = false; submitLabel.textContent = mode === "create" ? "Create Account" : "Login";
-      showAlert(err.code === "terms" ? "Please accept the Terms to continue." : friendlyAuthError(err));
-    }
-  });
-}
-
-/* ==========================================================================
-   PAYMENT VIEW
-   ---------------------------------------------------------------------
-   GATEWAY: Razorpay Checkout, loaded on demand (no backend required to
-   take a payment). Pay Now opens Razorpay's real popup using
-   CONFIG.razorpayKeyId; on success the popup calls back with a payment ID
-   which is what unlocks the registration step below.
-
-   Security note: without a backend, this payment ID is trusted as-is —
-   there is no server-side signature check, so this setup is fine to get
-   started and take real payments, but it doesn't protect against a
-   deliberately tampered request. When you're ready to harden it, deploy
-   the Cloud Function described in the BACKEND REFERENCE comment at the
-   bottom of this file (creates a real Razorpay Order server-side and
-   verifies the payment signature) — set CONFIG.backendBaseUrl and this
-   same code automatically switches to that safer path.
-========================================================================== */
-function paymentView(params) {
-  const { category = "", categoryLabel = category, slot = "", slotLabel = "", fee = "0", tournamentId = "" } = params;
-  return `
-  <div class="max-w-md mx-auto px-4 py-10 space-y-5">
-    <div class="bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-6">
-      <p class="font-display font-bold text-lg mb-3">Payment Summary</p>
-      <dl class="text-sm space-y-2">
-        <div class="flex justify-between"><dt class="text-steel">Category</dt><dd class="font-medium">${escapeHtml(categoryLabel)}</dd></div>
-        ${slotLabel ? `<div class="flex justify-between"><dt class="text-steel">Selected Slot</dt><dd class="font-medium">${escapeHtml(slotLabel)}</dd></div>` : ""}
-        <div class="flex justify-between"><dt class="text-steel">Entry Fee</dt><dd class="font-mono font-semibold">${formatCurrency(fee)}</dd></div>
-        <div class="flex justify-between"><dt class="text-steel">Status</dt><dd id="sumStatus" class="font-medium text-amber-400">Pending Payment</dd></div>
-      </dl>
-    </div>
-    <div class="bg-black rounded-2xl p-6 text-center">
-      <p class="text-steel text-xs font-display tracking-widest">TIME REMAINING</p>
-      <p id="timer" class="font-mono font-bold text-4xl text-cyan mt-1">05:00</p>
-    </div>
-    <div id="qrBlock" class="bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-6 text-center">
-      <button id="payBtn" class="glow-blue w-full bg-bolt text-white font-display font-bold py-3 rounded-lg transition-shadow flex items-center justify-center gap-2">
-        <span id="payBtnLabel">Pay Now</span>
-      </button>
-      <div class="flex justify-center gap-4 text-steel text-xs mt-4"><span>UPI</span><span>Debit Card</span><span>Credit Card</span><span>Net Banking</span><span>Wallet</span></div>
-      <p id="payError" class="hidden text-red-400 text-sm mt-3"></p>
-    </div>
-    <div id="expiredBlock" class="hidden bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-6 text-center">
-      <p class="font-display font-bold text-xl text-red-400">Session Expired</p>
-      <p class="text-steel text-sm mt-2">Your 5-minute payment window ran out. No amount was charged.</p>
-      <button id="returnBtn" class="glow-blue w-full mt-5 bg-bolt text-white font-display font-bold py-3 rounded-lg transition-shadow">Return to Slot Selection</button>
-    </div>
-    <input type="hidden" id="pv_category" value="${escapeHtml(category)}" />
-    <input type="hidden" id="pv_categoryLabel" value="${escapeHtml(categoryLabel)}" />
-    <input type="hidden" id="pv_slot" value="${escapeHtml(slot)}" />
-    <input type="hidden" id="pv_slotLabel" value="${escapeHtml(slotLabel)}" />
-    <input type="hidden" id="pv_fee" value="${escapeHtml(String(fee))}" />
-    <input type="hidden" id="pv_tournamentId" value="${escapeHtml(tournamentId)}" />
-  </div>`;
-}
-
-// Loads Razorpay's checkout bundle on demand (only when someone actually
-// opens the payment page) and caches it so it's only fetched once.
-let razorpayScriptPromise = null;
-function loadRazorpayScript() {
-  if (window.Razorpay) return Promise.resolve();
-  if (razorpayScriptPromise) return razorpayScriptPromise;
-  razorpayScriptPromise = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve();
-    script.onerror = () => { razorpayScriptPromise = null; reject(new Error("Could not load the payment gateway. Check your connection and try again.")); };
-    document.head.appendChild(script);
-  });
-  return razorpayScriptPromise;
-}
-
-// GATEWAY INTEGRATION POINT #1 — figure out what to charge. If a backend
-// is configured it looks the real price up server-side (never trusts the
-// page); otherwise it uses the fee already shown in the booking flow so
-// payments work immediately with no backend at all.
-async function createOrderRequest({ category, slot, tournamentId, uid, fee }) {
-  if (CONFIG.backendBaseUrl && CONFIG.backendBaseUrl !== "YOUR_BACKEND_BASE_URL") {
-    const res = await fetch(`${CONFIG.backendBaseUrl}/createOrder`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ category, slot, tournamentId, uid }),
-    });
-    if (!res.ok) throw new Error("Could not start payment. Please try again.");
-    return res.json(); // { amount, orderId? }
+  /* ---------- Cart state ---------- */
+  let cart = JSON.parse(localStorage.getItem("aurevia_cart") || "[]");
+  function saveCart(){
+    localStorage.setItem("aurevia_cart", JSON.stringify(cart));
+    renderCart();
+    syncCartToFirestore();
   }
-  return { amount: Number(fee) || 0 };
-}
-
-// GATEWAY INTEGRATION POINT #2 — opens the real Razorpay Checkout popup
-// and resolves with Razorpay's response once the person actually pays.
-async function openGatewayCheckout(order, meta) {
-  await loadRazorpayScript();
-  return new Promise((resolve, reject) => {
-    const options = {
-      key: CONFIG.razorpayKeyId,
-      amount: Math.round(Number(order.amount) * 100), // paise
-      currency: "INR",
-      name: CONFIG.companyName,
-      description: meta.slotLabel ? `${meta.categoryLabel} — ${meta.slotLabel}` : meta.categoryLabel,
-      prefill: { name: currentUser?.displayName || "", email: currentUser?.email || "" },
-      theme: { color: "#2563EB" },
-      handler: (response) => resolve(response),
-      modal: { ondismiss: () => reject(new Error("Payment was cancelled.")) },
-    };
-    if (order.orderId) options.order_id = order.orderId;
-    const rzp = new window.Razorpay(options);
-    rzp.on("payment.failed", (response) => reject(new Error(response.error?.description || "Payment failed. Please try again.")));
-    rzp.open();
-  });
-}
-
-// GATEWAY INTEGRATION POINT #3 — confirms the payment. With a backend
-// configured it verifies Razorpay's signature server-side (the only fully
-// tamper-proof path). Without one, it accepts Razorpay's own success
-// callback — real money moves either way, this only affects how strictly
-// the result is double-checked.
-async function verifyPaymentRequest(gatewayResponse, bookingContext) {
-  if (CONFIG.backendBaseUrl && CONFIG.backendBaseUrl !== "YOUR_BACKEND_BASE_URL") {
-    const res = await fetch(`${CONFIG.backendBaseUrl}/verifyPayment`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...gatewayResponse, ...bookingContext }),
-    });
-    if (!res.ok) throw new Error("Payment could not be verified.");
-    return res.json(); // { verified: true, paymentId }
+  function syncCartToFirestore(){
+    const user = fbAuth.currentUser;
+    if(!user) return;
+    db.collection("cart").doc(user.uid).set({ items: cart, updatedAt: Date.now() }).catch(()=>{});
   }
-  if (!gatewayResponse?.razorpay_payment_id) throw new Error("Payment could not be confirmed.");
-  return { verified: true, paymentId: gatewayResponse.razorpay_payment_id };
-}
-
-let paymentTimerInterval = null;
-function bindPaymentView() {
-  if (!currentUser) { rememberReturnTo(); window.location.hash = "#/login"; return; }
-
-  const category = document.getElementById("pv_category").value;
-  const categoryLabel = document.getElementById("pv_categoryLabel").value;
-  const slot = document.getElementById("pv_slot").value;
-  const slotLabel = document.getElementById("pv_slotLabel").value;
-  const fee = document.getElementById("pv_fee").value;
-  const tournamentId = document.getElementById("pv_tournamentId").value;
-
-  let secondsLeft = 5 * 60;
-  function draw() {
-    const m = String(Math.max(0, Math.floor(secondsLeft / 60))).padStart(2, "0");
-    const s = String(Math.max(0, secondsLeft % 60)).padStart(2, "0");
-    document.getElementById("timer").textContent = `${m}:${s}`;
+  function addToCart(productId, size, qty){
+    qty = qty || 1;
+    const existing = cart.find(c=>c.id===productId && c.size===size);
+    if(existing){ existing.qty += qty; } else { cart.push({id:productId, size, qty}); }
+    saveCart();
+    showToast("Added to cart");
+    document.getElementById("cartBadge").classList.remove("hide");
   }
-  draw();
-  paymentTimerInterval = setInterval(() => {
-    secondsLeft--; draw();
-    if (secondsLeft <= 0) {
-      clearInterval(paymentTimerInterval);
-      document.getElementById("qrBlock").classList.add("hidden");
-      document.getElementById("expiredBlock").classList.remove("hidden");
-    }
-  }, 1000);
-
-  document.getElementById("returnBtn")?.addEventListener("click", () => {
-    const back = { "daily-grind": "daily-grind", "weekly-war": "weekly-war", "weekend-war": "weekend-war" }[category] || "tournaments";
-    window.location.hash = `#/${back}`;
-  });
-
-  const payBtn = document.getElementById("payBtn");
-  const payBtnLabel = document.getElementById("payBtnLabel");
-  const payError = document.getElementById("payError");
-  let paying = false;
-
-  payBtn.addEventListener("click", async () => {
-    if (paying || secondsLeft <= 0) return;
-    paying = true; payError.classList.add("hidden");
-    payBtn.disabled = true; payBtnLabel.innerHTML = '<span class="spinner"></span>';
-    try {
-      const order = await createOrderRequest({ category, slot, tournamentId, uid: currentUser.uid, fee });
-      const gatewayResponse = await openGatewayCheckout(order, { categoryLabel, slotLabel });
-      const verified = await verifyPaymentRequest(gatewayResponse, { category, slot, tournamentId, uid: currentUser.uid });
-      if (!verified.verified) throw new Error("Payment could not be verified. No registration was created.");
-
-      clearInterval(paymentTimerInterval);
-      document.getElementById("sumStatus").textContent = "Paid";
-      document.getElementById("sumStatus").className = "font-medium text-emerald-400";
-      window.location.hash = `#/${buildHash("register", { category, categoryLabel, slot, slotLabel, fee, tournamentId, paymentId: verified.paymentId })}`;
-    } catch (err) {
-      payError.textContent = err.message || "Something went wrong. Please try again.";
-      payError.classList.remove("hidden");
-      payBtn.disabled = false; payBtnLabel.textContent = "Pay Now";
-      paying = false;
-    }
-  });
-}
-
-// ---------------- REGISTER (post-payment team details) ----------------
-function registerView(params) {
-  const { category = "", categoryLabel = category, slot = "", slotLabel = "", fee = "0", paymentId = "", tournamentId = "" } = params;
-  if (!paymentId) { window.location.hash = "#/home"; return ""; }
-  return `
-  <div class="max-w-md mx-auto px-4 py-10">
-    <div class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm rounded-lg px-4 py-3 mb-6 text-center">✅ Payment verified — just a few details to lock in your slot.</div>
-    <form id="regForm" class="bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-6 space-y-5">
-      <div id="regError" class="hidden text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3"></div>
-      <div><label class="text-xs font-display tracking-wide text-steel">TEAM NAME</label>
-        <input name="teamName" class="mt-1 w-full bg-white/5 border border-white/10 focus:border-cyan outline-none rounded-lg px-4 py-3 text-white placeholder-white/30" placeholder="e.g. Arctic Wolves" /></div>
-      <div><label class="text-xs font-display tracking-wide text-steel">MOBILE NUMBER</label>
-        <input name="mobileNumber" maxlength="10" inputmode="numeric" class="mt-1 w-full bg-white/5 border border-white/10 focus:border-cyan outline-none rounded-lg px-4 py-3 text-white placeholder-white/30" placeholder="10-digit mobile number" /></div>
-      <input type="hidden" name="category" value="${escapeHtml(category)}" /><input type="hidden" name="categoryLabel" value="${escapeHtml(categoryLabel)}" />
-      <input type="hidden" name="slot" value="${escapeHtml(slot)}" /><input type="hidden" name="slotLabel" value="${escapeHtml(slotLabel)}" />
-      <input type="hidden" name="fee" value="${escapeHtml(String(fee))}" /><input type="hidden" name="paymentId" value="${escapeHtml(paymentId)}" />
-      <input type="hidden" name="tournamentId" value="${escapeHtml(tournamentId)}" />
-      <button type="submit" id="regSubmit" class="glow-blue w-full bg-bolt text-white font-display font-bold py-3 rounded-lg transition-shadow flex items-center justify-center gap-2">
-        <span id="regSubmitLabel">Complete Registration</span>
-      </button>
-    </form>
-  </div>`;
-}
-// Silent admin notification — fires a background request only, never
-// shown to or awaited by the buyer. Does nothing until CONFIG.backendBaseUrl
-// points at a real backend that forwards this to WhatsApp (see the
-// BACKEND REFERENCE comment at the bottom of this file for what that
-// backend needs to do with the WhatsApp Business API).
-function notifyAdmin(event, payload) {
-  if (!CONFIG.backendBaseUrl || CONFIG.backendBaseUrl === "YOUR_BACKEND_BASE_URL") return;
-  fetch(`${CONFIG.backendBaseUrl}/notify`, {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ channel: "whatsapp", to: CONFIG.adminWhatsappNumber, event, payload }),
-  }).catch(() => { /* best-effort — never surfaced to the buyer */ });
-}
-function staticGroupLink(category, ctx = {}) {
-  if (category === "daily-grind" && ctx.slot) {
-    const slot = DEFAULT_SLOTS.find((s) => s.id === ctx.slot);
-    return slot?.whatsappGroup || CONFIG.whatsappFallback.default;
+  function removeFromCart(productId, size){
+    cart = cart.filter(c=>!(c.id===productId && c.size===size));
+    saveCart();
   }
-  if (category === "tournament" && ctx.tournamentId) {
-    const t = DEFAULT_TOURNAMENTS.find((t) => t.id === ctx.tournamentId);
-    return t?.whatsappGroup || CONFIG.whatsappFallback.default;
+  function changeQty(productId, size, delta){
+    const item = cart.find(c=>c.id===productId && c.size===size);
+    if(!item) return;
+    item.qty += delta;
+    if(item.qty<=0){ removeFromCart(productId,size); return; }
+    saveCart();
   }
-  const docKey = { "weekly-war": "weekly_war", "weekend-war": "weekend_war" }[category];
-  return (docKey && CONFIG.whatsappFallback[docKey]) || CONFIG.whatsappFallback.default;
-}
-async function fetchGroupLink(category, ctx = {}) {
-  try {
-    if (category === "daily-grind" && ctx.slot) {
-      const snap = await withTimeout(getDoc(doc(db, "scrims", ctx.slot)));
-      if (snap.exists() && snap.data().whatsappGroup) return snap.data().whatsappGroup;
-    } else if (category === "tournament" && ctx.tournamentId) {
-      const snap = await withTimeout(getDoc(doc(db, "tournaments", ctx.tournamentId)));
-      if (snap.exists() && snap.data().whatsappGroup) return snap.data().whatsappGroup;
-    } else {
-      const docKey = { "weekly-war": "weekly_war", "weekend-war": "weekend_war" }[category];
-      if (docKey) {
-        const snap = await withTimeout(getDoc(doc(db, "whatsapp_links", docKey)));
-        if (snap.exists() && snap.data().groupLink) return snap.data().groupLink;
-      }
-    }
-  } catch { /* fall through to the static default below */ }
-  return staticGroupLink(category, ctx);
-}
-function bindRegisterView() {
-  const form = document.getElementById("regForm");
-  if (!form) return;
-  const errorBox = document.getElementById("regError");
-  const submitBtn = document.getElementById("regSubmit"), submitLabel = document.getElementById("regSubmitLabel");
-  let submitting = false;
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (submitting) return;
-    const fd = new FormData(form);
-    const data = Object.fromEntries(fd.entries());
-    const err = validateTeamName(data.teamName) || validateMobile(data.mobileNumber);
-    if (err) { errorBox.textContent = err; errorBox.classList.remove("hidden"); return; }
-    errorBox.classList.add("hidden"); submitting = true;
-    submitBtn.disabled = true; submitLabel.innerHTML = '<span class="spinner"></span>';
-
-    try {
-      const registrationId = data.paymentId; // dedupe key — one registration per verified payment
-      const groupLink = await fetchGroupLink(data.category, { slot: data.slot, tournamentId: data.tournamentId });
-      const existing = await withTimeout(getDoc(doc(db, "registrations", registrationId)), 10000);
-      if (existing.exists()) throw new Error("duplicate");
-
-      await withTimeout(setDoc(doc(db, "registrations", registrationId), {
-        registrationId, uid: currentUser.uid, category: data.category, categoryLabel: data.categoryLabel,
-        slot: data.slot, slotLabel: data.slotLabel, entryFee: Number(data.fee), paymentStatus: "Paid",
-        paymentId: data.paymentId, teamName: data.teamName.trim(), mobileNumber: data.mobileNumber.trim(),
-        joinGroupLink: groupLink, createdAt: serverTimestamp(),
-      }), 10000);
-
-      const receiptNumber = generateReceiptNumber();
-      await withTimeout(addDoc(collection(db, "orders"), {
-        registrationId, uid: currentUser.uid, category: data.category, categoryLabel: data.categoryLabel,
-        slot: data.slot, slotLabel: data.slotLabel, amount: Number(data.fee), paymentStatus: "Paid",
-        paymentId: data.paymentId, receiptNumber, createdAt: serverTimestamp(),
-      }), 10000);
-
-      // Silent, fire-and-forget — the buyer never sees this and it never
-      // blocks or delays their flow either way.
-      notifyAdmin("new_registration", {
-        teamName: data.teamName.trim(), mobileNumber: data.mobileNumber.trim(),
-        category: data.categoryLabel, slot: data.slotLabel, fee: data.fee,
-        paymentId: data.paymentId, receiptNumber,
-      });
-
-      window.location.hash = `#/${buildHash("success", { category: data.categoryLabel, groupLink, receiptNumber })}`;
-    } catch (err) {
-      submitting = false; submitBtn.disabled = false; submitLabel.textContent = "Complete Registration";
-      errorBox.textContent = err.message === "duplicate" ? "This payment has already been used to register." : "Something went wrong. Check My Orders.";
-      errorBox.classList.remove("hidden");
-    }
-  });
-}
-
-// ---------------- SUCCESS ----------------
-function successView(params) {
-  const { category = "", groupLink = "", receiptNumber = "" } = params;
-  return `
-  <div class="min-h-[calc(100vh-70px)] flex items-center justify-center px-4">
-    <div class="max-w-md w-full bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-8 text-center">
-      <div class="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-5">
-        <i class="fa-solid fa-check text-emerald-400 text-2xl"></i>
-      </div>
-      <h1 class="font-display font-bold text-2xl">Registration Successful</h1>
-      <p class="text-steel text-sm mt-2">Payment Verified · ${escapeHtml(category)}</p>
-      <p class="text-steel text-sm">Team registered successfully. Receipt <span class="font-mono">${escapeHtml(receiptNumber)}</span></p>
-      <a href="${escapeHtml(groupLink)}" target="_blank" rel="noopener" class="glow-blue block mt-6 bg-[#25D366] text-white font-display font-bold py-3 rounded-lg transition-shadow">JOIN WHATSAPP GROUP</a>
-      <a href="#/orders" class="block mt-3 border border-white/10 font-display font-semibold py-3 rounded-lg hover:bg-white/5">View My Orders</a>
-      <a href="#/home" class="block mt-3 text-steel text-sm hover:text-white">Return Home</a>
-    </div>
-  </div>`;
-}
-
-// ---------------- ORDERS ----------------
-function ordersView() {
-  return `
-  <section class="max-w-4xl mx-auto px-4 py-8">
-    <input id="ordersSearch" type="text" placeholder="Search by team name, tournament, slot, category, or payment ID…"
-      class="w-full bg-white/5 border border-white/10 focus:border-cyan outline-none rounded-lg px-4 py-3 mb-4 text-white placeholder-white/30" />
-    <div class="flex flex-wrap gap-2 mb-6" id="ordersFilterBar">
-      <button data-filter="all" class="chip bg-bolt text-white px-4 py-1.5 rounded-full text-xs font-display font-semibold">All</button>
-      <button data-filter="daily-grind" class="chip bg-white/5 border border-white/10 text-white px-4 py-1.5 rounded-full text-xs font-display font-semibold">Daily Grind</button>
-      <button data-filter="weekly-war" class="chip bg-white/5 border border-white/10 text-white px-4 py-1.5 rounded-full text-xs font-display font-semibold">Weekly War</button>
-      <button data-filter="weekend-war" class="chip bg-white/5 border border-white/10 text-white px-4 py-1.5 rounded-full text-xs font-display font-semibold">Weekend War</button>
-      <button data-filter="tournament" class="chip bg-white/5 border border-white/10 text-white px-4 py-1.5 rounded-full text-xs font-display font-semibold">Tournament</button>
-    </div>
-    <div id="ordersList" class="space-y-4">${Array(3).fill(0).map(() => `<div class="skeleton rounded-2xl h-28"></div>`).join("")}</div>
-    <div id="ordersEmpty" class="hidden text-center py-16">
-      <p class="font-display font-bold text-xl">No registrations found.</p>
-      <a href="#/daily-grind" class="inline-block mt-4 bg-bolt text-white font-display font-semibold px-6 py-3 rounded-lg">Book Scrims</a>
-    </div>
-  </section>`;
-}
-let ordersUnsub = null;
-function bindOrdersView() {
-  if (!currentUser) { rememberReturnTo(); window.location.hash = "#/login"; return; }
-  const listEl = document.getElementById("ordersList");
-  const emptyEl = document.getElementById("ordersEmpty");
-  let allOrders = [], activeFilter = "all", searchTerm = "";
-
-  if (ordersUnsub) { ordersUnsub(); ordersUnsub = null; }
-  const q = query(collection(db, "orders"), where("uid", "==", currentUser.uid), orderBy("createdAt", "desc"));
-  ordersUnsub = onSnapshot(q, (snap) => { allOrders = snap.docs.map((d) => ({ id: d.id, ...d.data() })); render(); }, () => { allOrders = []; render(); });
-
-  function render() {
-    let list = [...allOrders];
-    if (activeFilter !== "all") list = list.filter((o) => o.category === activeFilter);
-    if (searchTerm) {
-      const t = searchTerm.toLowerCase();
-      list = list.filter((o) => (o.categoryLabel || "").toLowerCase().includes(t) || (o.slotLabel || "").toLowerCase().includes(t) || (o.paymentId || "").toLowerCase().includes(t) || (o.receiptNumber || "").toLowerCase().includes(t));
-    }
-    if (!list.length) { listEl.innerHTML = ""; emptyEl.classList.remove("hidden"); return; }
-    emptyEl.classList.add("hidden");
-    listEl.innerHTML = list.map((o) => `
-      <div class="bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div><p class="font-display font-bold text-lg">${escapeHtml(o.categoryLabel || o.category)}${o.slotLabel ? " — " + escapeHtml(o.slotLabel) : ""}</p>
-        <p class="text-steel text-xs mt-1 font-mono">Receipt ${escapeHtml(o.receiptNumber || "—")} · Payment ${escapeHtml(o.paymentId || "—")}</p>
-        <p class="text-steel text-xs mt-1">${formatDateTime(o.createdAt)}</p></div>
-        <div class="flex items-center gap-3"><span class="text-sm font-mono font-semibold">${formatCurrency(o.amount)}</span>
-        <span class="text-xs font-display font-semibold px-3 py-1 rounded-full ${o.paymentStatus === "Paid" ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"}">${escapeHtml(o.paymentStatus)}</span></div>
-      </div>`).join("");
+  function cartTotal(){
+    return cart.reduce((sum,c)=>{ const p=productById(c.id); return sum + (p? p.price*c.qty:0); },0);
   }
-  document.getElementById("ordersSearch").addEventListener("input", (e) => { searchTerm = e.target.value; render(); });
-  document.getElementById("ordersFilterBar").addEventListener("click", (e) => {
-    const btn = e.target.closest("button"); if (!btn) return;
-    document.querySelectorAll("#ordersFilterBar .chip").forEach((b) => { b.classList.remove("bg-bolt", "text-white"); b.classList.add("bg-white/5", "border", "border-white/10"); });
-    btn.classList.add("bg-bolt", "text-white"); btn.classList.remove("bg-white/5", "border", "border-white/10");
-    activeFilter = btn.dataset.filter; render();
-  });
-}
+  function cartCount(){ return cart.reduce((s,c)=>s+c.qty,0); }
 
-// ---------------- PROFILE ----------------
-function profileView() {
-  return `
-  <section class="max-w-3xl mx-auto px-4 py-10">
-    <div class="bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-6 flex items-center gap-5">
-      <img id="profilePhoto" src="" alt="" class="w-16 h-16 rounded-full object-cover bg-white/10 hidden" />
-      <div id="profileInitials" class="w-16 h-16 rounded-full bg-bolt text-white font-display font-bold text-xl flex items-center justify-center"></div>
-      <div><p id="profileName" class="font-display font-bold text-xl"></p><p id="profileEmail" class="text-steel text-sm"></p><p id="profileJoined" class="text-steel text-xs mt-1"></p></div>
-    </div>
-    <div class="grid grid-cols-2 gap-4 mt-6">
-      <div class="bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-5 text-center"><p id="profileTotalRegs" class="font-display font-bold text-3xl">0</p><p class="text-steel text-xs mt-1">Total Registrations</p></div>
-      <div class="bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-5 text-center"><p id="profileTotalPaid" class="font-display font-bold text-3xl">₹0</p><p class="text-steel text-xs mt-1">Total Paid</p></div>
-    </div>
-    <div class="mt-6 flex gap-3">
-      <a href="#/orders" class="flex-1 text-center border border-white/10 bg-[#12141c] font-display font-semibold py-3 rounded-lg hover:bg-white/5">Recent Orders</a>
-      <button id="editProfileBtn" class="flex-1 border border-white/10 bg-[#12141c] font-display font-semibold py-3 rounded-lg hover:bg-white/5">Edit Profile</button>
-    </div>
-    <button id="profileLogoutBtn" class="w-full mt-3 bg-black border border-white/10 text-white font-display font-bold py-3 rounded-lg">Logout</button>
-  </section>`;
-}
-async function bindProfileView() {
-  if (!currentUser) { rememberReturnTo(); window.location.hash = "#/login"; return; }
-  const u = currentUser;
-  document.getElementById("profileName").textContent = u.displayName || "Player";
-  document.getElementById("profileEmail").textContent = u.email || "";
-  document.getElementById("profileJoined").textContent = u.metadata?.creationTime ? `Member since ${new Date(u.metadata.creationTime).toLocaleDateString()}` : "";
-  if (u.photoURL) { document.getElementById("profilePhoto").src = u.photoURL; document.getElementById("profilePhoto").classList.remove("hidden"); document.getElementById("profileInitials").classList.add("hidden"); }
-  else { document.getElementById("profileInitials").textContent = (u.displayName || u.email || "?").charAt(0).toUpperCase(); }
-  try {
-    const snap = await getDocs(query(collection(db, "orders"), where("uid", "==", u.uid)));
-    const orders = snap.docs.map((d) => d.data());
-    document.getElementById("profileTotalRegs").textContent = orders.length;
-    document.getElementById("profileTotalPaid").textContent = formatCurrency(orders.reduce((s, o) => s + (Number(o.amount) || 0), 0));
-  } catch { /* leave at 0 */ }
-  document.getElementById("profileLogoutBtn").addEventListener("click", async () => { await signOut(auth); window.location.hash = "#/home"; });
-  document.getElementById("editProfileBtn").addEventListener("click", () => alert("Profile editing is coming soon."));
-}
-
-// ---------------- CONTACT / ABOUT ----------------
-function contactView() {
-  return `
-  <section class="max-w-2xl mx-auto px-4 py-14">
-    <h1 class="font-display font-bold text-3xl text-center">Contact Us</h1>
-    <p class="text-steel text-center mt-2">Organisers — ${escapeHtml(CONFIG.companyName)}</p>
-    <div class="bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-6 mt-8 space-y-6">
-      <div class="flex items-center justify-between">
-        <div><p class="text-xs font-display tracking-wide text-steel">PRIMARY CONTACT</p><p class="font-display font-bold text-lg">${CONFIG.contact.primary}</p></div>
-        <div class="flex gap-2"><a href="tel:${CONFIG.contact.primary}" class="glow-blue bg-bolt text-white text-sm font-display font-semibold px-4 py-2 rounded-lg transition-shadow">Call</a>
-        <a href="https://wa.me/91${CONFIG.contact.primary}" target="_blank" rel="noopener" class="bg-[#25D366] text-white text-sm font-display font-semibold px-4 py-2 rounded-lg">WhatsApp</a></div>
-      </div>
-      <div class="flex items-center justify-between border-t border-white/10 pt-6">
-        <div><p class="text-xs font-display tracking-wide text-steel">ALTERNATIVE CONTACT</p><p class="font-display font-bold text-lg">${CONFIG.contact.alternate}</p></div>
-        <div class="flex gap-2"><a href="tel:${CONFIG.contact.alternate}" class="glow-blue bg-bolt text-white text-sm font-display font-semibold px-4 py-2 rounded-lg transition-shadow">Call</a>
-        <a href="https://wa.me/91${CONFIG.contact.alternate}" target="_blank" rel="noopener" class="bg-[#25D366] text-white text-sm font-display font-semibold px-4 py-2 rounded-lg">WhatsApp</a></div>
-      </div>
-    </div>
-  </section>`;
-}
-function aboutView() {
-  return `
-  <section class="max-w-2xl mx-auto px-4 py-14">
-    <h1 class="font-display font-bold text-3xl text-center mb-8">About ${escapeHtml(CONFIG.companyName)}</h1>
-    <div class="bg-[#12141c] border border-white/10 rounded-2xl shadow-sm p-8 space-y-4 text-steel leading-relaxed">
-      <p>${escapeHtml(CONFIG.companyName)} organizes fair BGMI scrims, tournaments and competitive events for players who take their rotations as seriously as we do.</p>
-      <p>From Daily Grind slots that keep squads sharp, to Weekly War and Weekend War fixtures, to full tournament brackets with real prize pools — every event runs on fair play, real competition, and a registration process that respects your time.</p>
-      <p>Booking a slot, paying, and getting your room details takes minutes. Every match is backed by trusted organizers and a WhatsApp community that keeps you updated the moment something changes.</p>
-    </div>
-  </section>`;
-}
-
-// ---------------- 404 ----------------
-function notFoundView() {
-  return `
-  <div class="min-h-[calc(100vh-70px)] bg-ink flex items-center justify-center px-4 text-center">
-    <div><p class="font-display font-bold text-7xl text-cyan">404</p>
-    <h1 class="font-display font-bold text-2xl text-white mt-2">This page went out of bounds.</h1>
-    <p class="text-steel mt-2">The page you're looking for doesn't exist or has moved.</p>
-    <a href="#/home" class="inline-block mt-6 bg-bolt text-white font-display font-semibold px-6 py-3 rounded-lg">Return Home</a></div>
-  </div>`;
-}
-function forbiddenView() {
-  return `
-  <div class="min-h-[calc(100vh-70px)] bg-ink flex items-center justify-center px-4 text-center">
-    <div><p class="font-display font-bold text-7xl text-cyan">403</p>
-    <h1 class="font-display font-bold text-2xl text-white mt-2">You don't have access to this area.</h1>
-    <p class="text-steel mt-2">This section is restricted to organizers.</p>
-    <a href="#/home" class="inline-block mt-6 bg-bolt text-white font-display font-semibold px-6 py-3 rounded-lg">Return Home</a></div>
-  </div>`;
-}
-
-/* ==========================================================================
-   ADMIN — login gate + dashboard (role == 'admin' in Firestore users/{uid})
-========================================================================== */
-function adminLoginView() {
-  return `
-  <div class="bg-ink min-h-[calc(100vh-70px)] flex items-center justify-center px-4">
-    <div class="w-full max-w-sm bg-black/60 border border-white/10 rounded-2xl p-8">
-      <div class="text-center mb-6">
-        <span class="inline-flex w-10 h-10 rounded bg-gradient-to-br from-bolt to-cyan items-center justify-center text-black font-black text-sm mb-3">AE</span>
-        <h1 class="font-display font-bold text-2xl text-white">Organizer Access</h1><p class="text-steel text-sm mt-1">Sign in with your admin account</p>
-      </div>
-      <div id="adminAlert" class="hidden mb-4 text-sm rounded-lg px-4 py-3 bg-red-500/10 text-red-300 border border-red-500/30"></div>
-      <form id="adminLoginForm" class="space-y-4">
-        <div><label class="text-steel text-xs font-display tracking-wide">EMAIL</label>
-          <input id="adminEmail" type="email" required class="mt-1 w-full bg-white/5 border border-white/10 focus:border-cyan outline-none rounded-lg px-4 py-3 text-white" /></div>
-        <div><label class="text-steel text-xs font-display tracking-wide">PASSWORD</label>
-          <input id="adminPassword" type="password" required class="mt-1 w-full bg-white/5 border border-white/10 focus:border-cyan outline-none rounded-lg px-4 py-3 text-white" /></div>
-        <button type="submit" id="adminSubmit" class="glow-blue w-full bg-bolt text-white font-display font-bold py-3 rounded-lg flex items-center justify-center gap-2"><span id="adminSubmitLabel">Access Dashboard</span></button>
-      </form>
-      <p class="text-center text-steel text-xs mt-6"><a href="#/home" class="hover:text-white">← Back to Site</a></p>
-    </div>
-  </div>`;
-}
-function bindAdminLoginView() {
-  const form = document.getElementById("adminLoginForm");
-  const alertBox = document.getElementById("adminAlert");
-  const submitBtn = document.getElementById("adminSubmit"), submitLabel = document.getElementById("adminSubmitLabel");
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    alertBox.classList.add("hidden"); submitBtn.disabled = true; submitLabel.innerHTML = '<span class="spinner"></span>';
-
-    let cred;
-    try {
-      cred = await withTimeout(signInWithEmailAndPassword(auth, document.getElementById("adminEmail").value.trim(), document.getElementById("adminPassword").value), 15000);
-    } catch (err) {
-      alertBox.textContent = err.message === "timeout"
-        ? "This is taking too long — check your internet connection and try again."
-        : "Invalid email or password.";
-      alertBox.classList.remove("hidden");
-      submitBtn.disabled = false; submitLabel.textContent = "Access Dashboard";
+  function renderCart(){
+    const wrap = document.getElementById("cartItems");
+    const badge = document.getElementById("cartBadge");
+    const count = cartCount();
+    badge.textContent = count;
+    badge.classList.toggle("hide", count===0);
+    document.getElementById("cartSubtotal").textContent = fmtPrice(cartTotal());
+    if(cart.length===0){
+      wrap.innerHTML = `<p class="text-sm text-gray-400 text-center mt-10">Your cart is empty.</p>`;
       return;
     }
-
-    try {
-      const snap = await withTimeout(getDoc(doc(db, "users", cred.user.uid)), 10000);
-      if (!snap.exists() || snap.data().role !== "admin") {
-        await signOut(auth);
-        alertBox.textContent = "This account signed in fine, but it isn't marked as admin yet. In Firestore, open users/" + cred.user.uid + " and make sure it has a field role = \"admin\".";
-        alertBox.classList.remove("hidden");
-        submitBtn.disabled = false; submitLabel.textContent = "Access Dashboard"; return;
-      }
-      window.location.hash = "#/admin";
-    } catch {
-      await signOut(auth);
-      alertBox.textContent = "Signed in, but couldn't confirm admin access — this usually means Firestore security rules aren't published yet, or are blocking this read. Check the rules and try again.";
-      alertBox.classList.remove("hidden");
-      submitBtn.disabled = false; submitLabel.textContent = "Access Dashboard";
-    }
-  });
-}
-
-const ADMIN_TABS = ["dashboard","registrations","scrims","wars","tournaments","whatsapp","faq","announcements","settings","orders"];
-function adminView() {
-  return `
-  <div class="bg-ink text-white flex min-h-[calc(100vh-70px)]">
-    <aside class="w-60 shrink-0 glass p-4 flex flex-col gap-1">
-      <div class="flex items-center gap-2 px-2 py-3 mb-2">
-        <span class="w-8 h-8 rounded bg-gradient-to-br from-bolt to-cyan flex items-center justify-center text-black font-black text-sm">AE</span>
-        <span class="font-display font-bold">Admin Panel</span>
-      </div>
-      <button class="nav-link active" data-tab="dashboard">📊 Dashboard</button>
-      <button class="nav-link" data-tab="registrations">📝 Registrations</button>
-      <button class="nav-link" data-tab="scrims">🗓️ Daily Grind Slots</button>
-      <button class="nav-link" data-tab="wars">⚔️ Weekly / Weekend War</button>
-      <button class="nav-link" data-tab="tournaments">🏆 Tournaments</button>
-      <button class="nav-link" data-tab="whatsapp">💬 WhatsApp Groups</button>
-      <button class="nav-link" data-tab="faq">❓ FAQ</button>
-      <button class="nav-link" data-tab="announcements">📣 Announcements</button>
-      <button class="nav-link" data-tab="settings">⚙️ Settings</button>
-      <button class="nav-link" data-tab="orders">📦 Orders</button>
-      <div class="flex-1"></div>
-      <button id="adminLogoutBtn" class="nav-link text-red-300">🚪 Logout</button>
-    </aside>
-    <main class="flex-1 p-6 overflow-y-auto">
-      ${ADMIN_TABS.map((t) => `<section id="admintab-${t}" class="admin-tab ${t === "dashboard" ? "" : "hidden"}"></section>`).join("")}
-    </main>
-  </div>`;
-}
-async function safeGetAll(colName) {
-  try { return (await withTimeout(getDocs(collection(db, colName)))).docs.map((d) => ({ id: d.id, ...d.data() })); }
-  catch { return []; }
-}
-function barRow(label, value, max) {
-  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
-  return `<div class="bar-row"><span class="text-xs w-28 text-steel">${escapeHtml(label)}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div><span class="text-xs w-8 text-right">${value}</span></div>`;
-}
-async function bindAdminView() {
-  document.querySelectorAll(".nav-link[data-tab]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".nav-link[data-tab]").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      document.querySelectorAll(".admin-tab").forEach((s) => s.classList.add("hidden"));
-      document.getElementById(`admintab-${btn.dataset.tab}`).classList.remove("hidden");
-    });
-  });
-  document.getElementById("adminLogoutBtn").addEventListener("click", async () => { await signOut(auth); window.location.hash = "#/home"; });
-
-  const [registrations, orders, tournaments] = await Promise.all([safeGetAll("registrations"), safeGetAll("orders"), safeGetAll("tournaments")]);
-
-  // Dashboard
-  const revenue = orders.filter((o) => o.paymentStatus === "Paid").reduce((s, o) => s + (Number(o.amount) || 0), 0);
-  const byCategory = {};
-  registrations.forEach((r) => { byCategory[r.category] = (byCategory[r.category] || 0) + 1; });
-  const maxCat = Math.max(1, ...Object.values(byCategory));
-  document.getElementById("admintab-dashboard").innerHTML = `
-    <h1 class="font-display font-bold text-2xl mb-6">Overview</h1>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      ${[["Total Registrations", registrations.length],["Total Orders", orders.length],["Total Revenue", formatCurrency(revenue)],["Tournaments Listed", tournaments.length]]
-        .map(([l,v]) => `<div class="glass rounded-xl p-4"><p class="text-steel text-xs font-display tracking-wide">${l.toUpperCase()}</p><p class="font-display font-bold text-2xl mt-1">${v}</p></div>`).join("")}
-    </div>
-    <div class="glass rounded-xl p-4"><p class="font-display font-semibold mb-3">Registrations by Category</p>
-      <div class="space-y-2">${Object.keys(byCategory).length ? Object.entries(byCategory).map(([k,v]) => barRow(k, v, maxCat)).join("") : '<p class="text-steel text-sm">No registrations yet.</p>'}</div>
-    </div>`;
-
-  // Registrations
-  function drawRegTable(list) {
-    document.getElementById("admintab-registrations").innerHTML = `
-      <h1 class="font-display font-bold text-2xl mb-4">Registrations</h1>
-      <input id="regSearchAdmin" placeholder="Search team, mobile, payment ID…" class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm w-80 outline-none mb-4" />
-      <div class="glass rounded-xl overflow-x-auto"><table class="admin-table"><thead><tr><th>Team</th><th>Category</th><th>Slot</th><th>Mobile</th><th>Amount</th><th>Status</th><th>Payment ID</th><th>Date</th></tr></thead>
-      <tbody>${list.map((r) => `<tr><td>${escapeHtml(r.teamName || "—")}</td><td>${escapeHtml(r.categoryLabel || r.category)}</td><td>${escapeHtml(r.slotLabel || r.slot || "—")}</td><td>${escapeHtml(r.mobileNumber || "—")}</td><td>${formatCurrency(r.entryFee)}</td>
-      <td><span class="pill ${r.paymentStatus === "Paid" ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"}">${escapeHtml(r.paymentStatus || "Pending")}</span></td><td class="font-mono text-xs">${escapeHtml(r.paymentId || "—")}</td><td class="text-xs">${formatDateTime(r.createdAt)}</td></tr>`).join("") || `<tr><td colspan="8" class="text-center text-steel py-6">No registrations yet.</td></tr>`}</tbody></table></div>`;
-    document.getElementById("regSearchAdmin").addEventListener("input", (e) => {
-      const t = e.target.value.toLowerCase();
-      drawRegTable(registrations.filter((r) => (r.teamName||"").toLowerCase().includes(t) || (r.mobileNumber||"").includes(t) || (r.paymentId||"").toLowerCase().includes(t)));
-    });
-  }
-  drawRegTable(registrations);
-
-  // Scrims management
-  async function renderScrimsTab() {
-    const existing = await safeGetAll("scrims");
-    const map = Object.fromEntries(existing.map((s) => [s.id, s]));
-    document.getElementById("admintab-scrims").innerHTML = `
-      <h1 class="font-display font-bold text-2xl mb-2">Daily Grind Slot Management</h1>
-      <p class="text-steel text-sm mb-4">Each slot has its own WhatsApp group — changes save straight to Firestore and reflect on the site immediately.</p>
-      <div id="scrimsGridAdmin" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        ${DEFAULT_SLOTS.map((s) => { const d = map[s.id] || { fee: s.fee, isActive: true, whatsappGroup: s.whatsappGroup }; return `
-        <div class="glass rounded-xl p-4 space-y-3" data-slot="${s.id}">
-          <div class="flex items-center justify-between gap-3">
-            <p class="font-display font-semibold">${escapeHtml(s.label)}</p>
-            <label class="flex items-center gap-2 text-xs text-steel"><input type="checkbox" class="active-toggle accent-bolt" ${d.isActive !== false ? "checked" : ""} /> Active</label>
+    wrap.innerHTML = cart.map(c=>{
+      const p = productById(c.id);
+      if(!p) return "";
+      return `<div class="flex gap-3">
+        <img src="${p.images[0]}" class="w-16 h-20 object-cover rounded-lg bg-[var(--grey)]">
+        <div class="flex-1">
+          <p class="text-sm font-medium leading-tight">${p.name}</p>
+          <p class="text-xs text-gray-500 mb-1">Size: ${c.size}</p>
+          <div class="flex items-center gap-2">
+            <button onclick="AUREVIA.cart.changeQty(${p.id},'${c.size}',-1)" class="w-6 h-6 border rounded-full text-xs">−</button>
+            <span class="text-xs">${c.qty}</span>
+            <button onclick="AUREVIA.cart.changeQty(${p.id},'${c.size}',1)" class="w-6 h-6 border rounded-full text-xs">+</button>
+            <button onclick="AUREVIA.cart.remove(${p.id},'${c.size}')" class="text-[11px] text-gray-400 underline ml-2">Remove</button>
           </div>
-          <div class="flex items-center gap-2"><span class="text-steel text-xs">₹</span><input type="number" class="fee-input bg-white/5 border border-white/10 rounded px-2 py-1 w-24 text-sm" value="${d.fee}" /></div>
-          <div><label class="text-xs text-steel">WhatsApp Group Link</label>
-            <input type="text" class="wa-input bg-white/5 border border-white/10 rounded px-2 py-1.5 w-full text-sm mt-1" value="${escapeHtml(d.whatsappGroup || s.whatsappGroup || "")}" placeholder="https://chat.whatsapp.com/..." /></div>
-          <button class="save-slot-btn bg-bolt text-xs font-display font-semibold px-3 py-2 rounded-lg w-full">Save</button>
-        </div>`; }).join("")}
+        </div>
+        <div class="text-sm font-medium">${fmtPrice(p.price*c.qty)}</div>
       </div>`;
-    document.querySelectorAll(".save-slot-btn").forEach((btn) => btn.addEventListener("click", async () => {
-      const card = btn.closest("[data-slot]"); const slotId = card.dataset.slot;
-      const fee = Number(card.querySelector(".fee-input").value); const isActive = card.querySelector(".active-toggle").checked;
-      const whatsappGroup = card.querySelector(".wa-input").value.trim();
-      const label = DEFAULT_SLOTS.find((s) => s.id === slotId).label;
-      btn.textContent = "Saving…";
-      await setDoc(doc(db, "scrims", slotId), { category: "daily-grind", slot: slotId, label, fee, isActive, whatsappGroup }, { merge: true });
-      btn.textContent = "Saved ✓"; setTimeout(() => (btn.textContent = "Save"), 1500);
-    }));
+    }).join("");
   }
-  renderScrimsTab();
 
-  // Wars management
-  async function renderWarsTab() {
-    const settingsAll = await safeGetAll("settings");
-    const map = Object.fromEntries(settingsAll.map((s) => [s.id, s]));
-    const cats = [{ id: "weekly-war", label: "Weekly War", fee: CONFIG.fees.weeklyWar }, { id: "weekend-war", label: "Weekend War", fee: CONFIG.fees.weekendWar }];
-    document.getElementById("admintab-wars").innerHTML = `
-      <h1 class="font-display font-bold text-2xl mb-4">Weekly / Weekend War</h1>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${cats.map((c) => { const d = map[c.id] || { fee: c.fee, registrationOpen: true }; return `
-        <div class="glass rounded-xl p-4 space-y-3" data-cat="${c.id}"><p class="font-display font-semibold">${c.label}</p>
-          <div class="flex items-center gap-2"><span class="text-steel text-xs">Entry Fee ₹</span><input type="number" class="fee-input bg-white/5 border border-white/10 rounded px-2 py-1 w-20 text-sm" value="${d.fee}" /></div>
-          <label class="flex items-center gap-2 text-xs text-steel"><input type="checkbox" class="open-toggle accent-bolt" ${d.registrationOpen !== false ? "checked" : ""} /> Registration Open</label>
-          <button class="save-war-btn bg-bolt text-xs font-display font-semibold px-3 py-2 rounded-lg">Save</button></div>`; }).join("")}</div>`;
-    document.querySelectorAll(".save-war-btn").forEach((btn) => btn.addEventListener("click", async () => {
-      const card = btn.closest("[data-cat]"); const catId = card.dataset.cat;
-      const fee = Number(card.querySelector(".fee-input").value); const registrationOpen = card.querySelector(".open-toggle").checked;
-      btn.textContent = "Saving…"; await setDoc(doc(db, "settings", catId), { fee, registrationOpen }, { merge: true });
-      btn.textContent = "Saved ✓"; setTimeout(() => (btn.textContent = "Save"), 1500);
-    }));
+  /* ---------- Toast ---------- */
+  let toastTimer;
+  function showToast(msg){
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove("show"), 2200);
   }
-  renderWarsTab();
 
-  // Tournaments CRUD
-  function renderTournamentsTab(list) {
-    const grid = document.getElementById("admintab-tournaments");
-    function draw(items) {
-      grid.innerHTML = `
-        <div class="flex items-center justify-between mb-4"><h1 class="font-display font-bold text-2xl">Tournaments</h1>
-        <button id="addTournamentBtn" class="bg-bolt font-display font-semibold px-4 py-2 rounded-lg text-sm">+ Add Tournament</button></div>
-        <div id="tGridInner" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        ${items.map((t) => `
-          <div class="glass rounded-xl p-4 space-y-2" data-id="${t.id}">
-            <input class="t-title bg-white/5 border border-white/10 rounded px-3 py-2 w-full font-display font-semibold" value="${escapeHtml(t.title || "")}" placeholder="Tournament title" />
-            <input class="t-date bg-white/5 border border-white/10 rounded px-3 py-2 w-full text-sm" value="${escapeHtml(t.startDate || "")}" placeholder="Start date" />
-            <input class="t-fee bg-white/5 border border-white/10 rounded px-3 py-2 w-full text-sm" type="number" value="${t.entryFee || 0}" placeholder="Entry fee" />
-            <input class="t-poster bg-white/5 border border-white/10 rounded px-3 py-2 w-full text-sm" value="${escapeHtml(t.poster || "")}" placeholder="Poster image URL" />
-            <input type="file" class="t-poster-file text-xs text-steel" accept="image/*" />
-            <input class="t-wa bg-white/5 border border-white/10 rounded px-3 py-2 w-full text-sm" value="${escapeHtml(t.whatsappGroup || "")}" placeholder="WhatsApp group link for this tournament" />
-            <textarea class="t-desc bg-white/5 border border-white/10 rounded px-3 py-2 w-full text-sm" placeholder="Description">${escapeHtml(t.description || "")}</textarea>
-            <div class="flex gap-2"><button class="save-t-btn bg-bolt text-xs font-display font-semibold px-3 py-2 rounded-lg flex-1">Save</button>
-            <button class="delete-t-btn bg-red-600/80 text-xs font-display font-semibold px-3 py-2 rounded-lg">Delete</button></div>
-          </div>`).join("")}
-        </div>`;
+  /* ---------- UI: drawer / search / cart / size guide ---------- */
+  function toggle(panelId, overlayId, open){
+    document.getElementById(panelId).classList.toggle("open", open);
+    document.getElementById(overlayId).classList.toggle("open", open);
+  }
+  const ui = {
+    openDrawer(){ toggle("drawer","drawerOverlay",true); },
+    closeDrawer(){ toggle("drawer","drawerOverlay",false); },
+    openSearch(){ toggle("searchPanel","searchOverlay",true); document.getElementById("searchInput").focus(); search.run(""); },
+    closeSearch(){ toggle("searchPanel","searchOverlay",false); },
+    openCart(){ renderCart(); toggle("cartPanel","cartOverlay",true); },
+    closeCart(){ toggle("cartPanel","cartOverlay",false); },
+    goToCartPage(){ ui.closeCart(); location.hash = "#/cart"; },
+    showEmailLogin(){ document.getElementById("loginOptions").classList.add("hide"); document.getElementById("emailLoginForm").classList.remove("hide"); document.getElementById("phoneLoginForm").classList.add("hide"); },
+    showPhoneLogin(){ document.getElementById("loginOptions").classList.add("hide"); document.getElementById("phoneLoginForm").classList.remove("hide"); document.getElementById("emailLoginForm").classList.add("hide"); },
+    showLoginOptions(){ document.getElementById("loginOptions").classList.remove("hide"); document.getElementById("emailLoginForm").classList.add("hide"); document.getElementById("phoneLoginForm").classList.add("hide"); document.getElementById("loginError").classList.add("hide"); },
+    loginErr(msg){ const e=document.getElementById("loginError"); e.textContent = msg; e.classList.remove("hide"); },
+    // size guide
+    _sgIndex: 0,
+    openSizeGuide(){ ui._sgIndex = 0; ui._renderSizeGuide(); toggle("sizeGuideOverlay",null,true); document.getElementById("sizeGuideOverlay").classList.add("open"); },
+    closeSizeGuide(e){ if(e && e.target.id !== "sizeGuideOverlay") return; document.getElementById("sizeGuideOverlay").classList.remove("open"); },
+    sizeGuideNav(dir){ ui._sgIndex = (ui._sgIndex + dir + SIZE_GUIDE_IMAGES.length) % SIZE_GUIDE_IMAGES.length; ui._renderSizeGuide(); },
+    _renderSizeGuide(){
+      document.getElementById("sizeGuideImg").src = SIZE_GUIDE_IMAGES[ui._sgIndex];
+      document.getElementById("sizeGuideCount").textContent = (ui._sgIndex+1)+" / "+SIZE_GUIDE_IMAGES.length;
+    }
+  };
+  // fix openSizeGuide overlay toggle (no matching panel, just overlay+modal itself)
+  ui.openSizeGuide = function(){
+    ui._sgIndex = 0; ui._renderSizeGuide();
+    document.getElementById("sizeGuideOverlay").classList.add("open");
+  };
+  ui.closeSizeGuide = function(e){
+    if(e && e.target && e.target.id !== "sizeGuideOverlay") return;
+    document.getElementById("sizeGuideOverlay").classList.remove("open");
+  };
 
-      grid.querySelectorAll(".t-poster-file").forEach((input) => input.addEventListener("change", async () => {
-        const file = input.files[0]; if (!file) return;
-        const card = input.closest("[data-id]");
-        try {
-          const path = `tournaments/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_")}`;
-          const sRef = storageRef(storage, path);
-          const task = uploadBytesResumable(sRef, file);
-          await new Promise((resolve, reject) => task.on("state_changed", null, reject, resolve));
-          card.querySelector(".t-poster").value = await getDownloadURL(task.snapshot.ref);
-        } catch (err) { alert("Upload failed: " + err.message); }
-      }));
+  /* ---------- Search ---------- */
+  const search = {
+    run(q){
+      q = (q||"").trim().toLowerCase();
+      const box = document.getElementById("searchResults");
+      if(!q){ box.innerHTML = `<p class="text-xs text-gray-400">Start typing to search ${PRODUCTS.length} products, categories & pages…</p>`; return; }
+      const pages = [
+        {name:"About Us", hash:"#/about"},{name:"Contact Us", hash:"#/contact"},
+        {name:"Terms of Service", hash:"#/terms"},{name:"Privacy Policy", hash:"#/privacy"},
+        {name:"Shipping Policy", hash:"#/shipping"},{name:"Return Policy", hash:"#/return"}
+      ].filter(p=>p.name.toLowerCase().includes(q));
+      const cats = CATEGORIES.filter(c=>c.toLowerCase().includes(q));
+      const prods = PRODUCTS.filter(p=>p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)).slice(0,20);
+      let html = "";
+      cats.forEach(c=> html += `<a href="#/products/${encodeURIComponent(c)}" onclick="AUREVIA.ui.closeSearch()" class="block text-sm py-2 border-b border-[var(--grey-line)]">📁 ${c}</a>`);
+      pages.forEach(p=> html += `<a href="${p.hash}" onclick="AUREVIA.ui.closeSearch()" class="block text-sm py-2 border-b border-[var(--grey-line)]">📄 ${p.name}</a>`);
+      prods.forEach(p=> html += `<a href="#/product/${p.id}" onclick="AUREVIA.ui.closeSearch()" class="flex items-center gap-3 py-2 border-b border-[var(--grey-line)]">
+          <img src="${p.images[0]}" class="w-10 h-12 object-cover rounded bg-[var(--grey)]"><span class="text-sm">${p.name}<br><span class="text-xs text-gray-400">${fmtPrice(p.price)}</span></span></a>`);
+      box.innerHTML = html || `<p class="text-xs text-gray-400">No results for “${q}”.</p>`;
+    }
+  };
 
-      grid.querySelectorAll(".save-t-btn").forEach((btn) => btn.addEventListener("click", async () => {
-        const card = btn.closest("[data-id]"); const id = card.dataset.id;
-        const payload = { title: card.querySelector(".t-title").value, startDate: card.querySelector(".t-date").value, entryFee: Number(card.querySelector(".t-fee").value), poster: card.querySelector(".t-poster").value, whatsappGroup: card.querySelector(".t-wa").value.trim(), description: card.querySelector(".t-desc").value };
-        btn.textContent = "Saving…";
-        if (id.startsWith("new-")) { const ref = await addDoc(collection(db, "tournaments"), payload); card.dataset.id = ref.id; }
-        else { await setDoc(doc(db, "tournaments", id), payload, { merge: true }); }
-        btn.textContent = "Saved ✓"; setTimeout(() => (btn.textContent = "Save"), 1500);
-      }));
-      grid.querySelectorAll(".delete-t-btn").forEach((btn) => btn.addEventListener("click", async () => {
-        const card = btn.closest("[data-id]"); if (!card.dataset.id.startsWith("new-")) await deleteDoc(doc(db, "tournaments", card.dataset.id)); card.remove();
-      }));
-      document.getElementById("addTournamentBtn").addEventListener("click", () => {
-        draw([...grid.querySelectorAll("[data-id]")].map((c) => items.find((i) => i.id === c.dataset.id) || { id: c.dataset.id }).concat([{ id: `new-${Date.now()}` }]));
+  /* ---------- GoKwik checkout placeholder ---------- */
+  const checkout = {
+    /* Integration point: replace this function body with the official
+       GoKwik SDK call. Kept isolated so no secret keys are ever needed
+       client-side — GoKwik order creation should happen on your backend. */
+    openGoKwik(order){
+      return new Promise(resolve=>{
+        showToast("Redirecting to GoKwik Checkout…");
+        setTimeout(()=>{
+          // Simulated success callback from GoKwik. In production this
+          // resolves from GoKwik's postMessage / redirect callback.
+          resolve({status:"success", gokwikOrderId:"GK"+Date.now()});
+        }, 1400);
       });
+    },
+    async buyNow(productId, size){
+      if(!size){ showToast("Please select a size"); return; }
+      const p = productById(productId);
+      const order = { items:[{id:p.id, name:p.name, size, qty:1, price:p.price}], amount:p.price };
+      await checkout._process(order);
+    },
+    async buyCart(){
+      if(cart.length===0){ showToast("Your cart is empty"); return; }
+      const items = cart.map(c=>{ const p=productById(c.id); return {id:p.id,name:p.name,size:c.size,qty:c.qty,price:p.price}; });
+      const order = { items, amount: cartTotal() };
+      await checkout._process(order);
+    },
+    async _process(order){
+      const result = await checkout.openGoKwik(order);
+      if(result.status === "success"){
+        const user = fbAuth.currentUser;
+        const record = { ...order, gokwikOrderId: result.gokwikOrderId, uid: user? user.uid: "guest", createdAt: Date.now(), paymentStatus:"paid" };
+        try{
+          await db.collection("orders").add(record);
+          await db.collection("payments").add({ orderRef: result.gokwikOrderId, amount: order.amount, status:"success", uid: user? user.uid:"guest", createdAt: Date.now() });
+        }catch(e){ /* Firestore optional in dev — proceed regardless */ }
+        cart = []; saveCart();
+        router.go("#/order-success", { orderId: result.gokwikOrderId, amount: order.amount });
+      } else {
+        showToast("Payment failed. Please try again.");
+      }
     }
-    draw(list);
-  }
-  renderTournamentsTab(tournaments.length ? tournaments : DEFAULT_TOURNAMENTS.map((t) => ({ ...t, id: `new-${t.id}` })));
+  };
 
-  // WhatsApp links
-  async function renderWhatsappTab() {
-    const docs = ["community", "weekly_war", "weekend_war"];
-    const labels = { community: "Homepage Community Group", weekly_war: "Weekly War", weekend_war: "Weekend War" };
-    const values = {};
-    for (const d of docs) { const snap = await getDoc(doc(db, "whatsapp_links", d)).catch(() => null); values[d] = snap?.exists() ? snap.data().groupLink || "" : ""; }
-    document.getElementById("admintab-whatsapp").innerHTML = `
-      <h1 class="font-display font-bold text-2xl mb-4">WhatsApp Group Links</h1>
-      <p class="text-steel text-sm mb-4">Daily Grind slots and Tournaments each have their own group link — set those in the "Daily Grind Slots" and "Tournaments" tabs. This tab is only for the links shared across the whole category.</p>
-      <div class="glass rounded-xl p-5 space-y-4 max-w-xl">
-        ${docs.map((d) => `<div><label class="text-xs font-display tracking-wide text-steel">${escapeHtml(labels[d])}</label>
-          <input id="wa_${d}" value="${escapeHtml(values[d])}" class="mt-1 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm outline-none" placeholder="https://chat.whatsapp.com/..." /></div>`).join("")}
-        <button id="saveWhatsappBtn" class="bg-bolt font-display font-semibold px-5 py-2.5 rounded-lg text-sm">Save Links</button>
-      </div>`;
-    document.getElementById("saveWhatsappBtn").addEventListener("click", async () => {
-      await Promise.all(docs.map((d) => setDoc(doc(db, "whatsapp_links", d), { groupLink: document.getElementById(`wa_${d}`).value, lastUpdated: serverTimestamp() }, { merge: true })));
-      alert("WhatsApp links saved — live on the site immediately.");
-    });
-  }
-  renderWhatsappTab();
+  /* ---------- Auth ---------- */
+  let confirmationResult = null;
+  const auth = {
+    google(){
+      const provider = new firebase.auth.GoogleAuthProvider();
+      fbAuth.signInWithPopup(provider).catch(e=> ui.loginErr(e.message));
+    },
+    facebook(){
+      const provider = new firebase.auth.FacebookAuthProvider();
+      fbAuth.signInWithPopup(provider).catch(e=> ui.loginErr(e.message));
+    },
+    emailSignIn(){
+      const email = document.getElementById("emailInput").value.trim();
+      const pass = document.getElementById("passInput").value;
+      fbAuth.signInWithEmailAndPassword(email,pass).catch(e=> ui.loginErr(e.message));
+    },
+    emailSignUp(){
+      const email = document.getElementById("emailInput").value.trim();
+      const pass = document.getElementById("passInput").value;
+      fbAuth.createUserWithEmailAndPassword(email,pass).catch(e=> ui.loginErr(e.message));
+    },
+    sendOtp(){
+      const phone = document.getElementById("phoneInput").value.trim();
+      if(!window.recaptchaVerifier){
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", { size:"invisible" }, fbAuth);
+      }
+      fbAuth.signInWithPhoneNumber(phone, window.recaptchaVerifier).then(res=>{
+        confirmationResult = res;
+        document.getElementById("otpStep").classList.remove("hide");
+        showToast("OTP sent");
+      }).catch(e=> ui.loginErr(e.message));
+    },
+    verifyOtp(){
+      const code = document.getElementById("otpInput").value.trim();
+      if(!confirmationResult){ ui.loginErr("Please request an OTP first."); return; }
+      confirmationResult.confirm(code).catch(e=> ui.loginErr(e.message));
+    },
+    signOut(){ fbAuth.signOut(); }
+  };
 
-// FAQ management
-  async function renderFaqTab() {
-    const items = await safeGetAll("faq");
-    const list = document.getElementById("admintab-faq");
-    function draw(items) {
-      list.innerHTML = `<div class="flex items-center justify-between mb-4"><h1 class="font-display font-bold text-2xl">FAQ</h1><button id="addFaqBtn" class="bg-bolt font-display font-semibold px-4 py-2 rounded-lg text-sm">+ Add FAQ</button></div>
-      <div id="faqListInner" class="space-y-3 max-w-2xl">
-      ${items.map((f) => `<div class="glass rounded-xl p-4 space-y-2" data-id="${f.id}">
-        <input class="faq-q-input bg-white/5 border border-white/10 rounded px-3 py-2 w-full text-sm" value="${escapeHtml(f.question || "")}" placeholder="Question" />
-        <textarea class="faq-a-input bg-white/5 border border-white/10 rounded px-3 py-2 w-full text-sm" placeholder="Answer">${escapeHtml(f.answer || "")}</textarea>
-        <div class="flex gap-2"><button class="save-faq-btn bg-bolt text-xs font-display font-semibold px-3 py-2 rounded-lg flex-1">Save</button><button class="delete-faq-btn bg-red-600/80 text-xs font-display font-semibold px-3 py-2 rounded-lg">Delete</button></div>
-      </div>`).join("")}</div>`;
-      list.querySelectorAll(".save-faq-btn").forEach((btn) => btn.addEventListener("click", async () => {
-        const card = btn.closest("[data-id]"); const id = card.dataset.id;
-        const payload = { question: card.querySelector(".faq-q-input").value, answer: card.querySelector(".faq-a-input").value };
-        btn.textContent = "Saving…";
-        if (id.startsWith("new-")) { const ref = await addDoc(collection(db, "faq"), payload); card.dataset.id = ref.id; } else { await setDoc(doc(db, "faq", id), payload, { merge: true }); }
-        btn.textContent = "Saved ✓"; setTimeout(() => (btn.textContent = "Save"), 1500);
-      }));
-      list.querySelectorAll(".delete-faq-btn").forEach((btn) => btn.addEventListener("click", async () => {
-        const card = btn.closest("[data-id]"); if (!card.dataset.id.startsWith("new-")) await deleteDoc(doc(db, "faq", card.dataset.id)); card.remove();
-      }));
-      document.getElementById("addFaqBtn").addEventListener("click", () => draw([...list.querySelectorAll("[data-id]")].map((c) => items.find((i) => i.id === c.dataset.id) || { id: c.dataset.id }).concat([{ id: `new-${Date.now()}` }])));
+  fbAuth.onAuthStateChanged(user=>{
+    const gate = document.getElementById("loginGate");
+    const app = document.getElementById("app");
+    if(user){
+      gate.classList.add("hide");
+      app.classList.remove("hide");
+      db.collection("users").doc(user.uid).set({
+        uid:user.uid, email:user.email||null, phone:user.phoneNumber||null,
+        lastLogin: Date.now()
+      }, {merge:true}).catch(()=>{});
+      // pull cloud cart if local is empty
+      if(cart.length===0){
+        db.collection("cart").doc(user.uid).get().then(doc=>{
+          if(doc.exists && doc.data().items){ cart = doc.data().items; saveCart(); }
+        }).catch(()=>{});
+      }
+      if(!location.hash) location.hash = "#/home";
+      router.render();
+    } else {
+      gate.classList.remove("hide");
+      app.classList.add("hide");
+      ui.showLoginOptions();
     }
-    draw(items);
+  });
+
+  /* ============================================================
+     ROUTER + PAGE RENDERERS
+     ============================================================ */
+  function productCard(p){
+    return `<a href="#/product/${p.id}" class="group block">
+      <div class="relative overflow-hidden rounded-xl bg-[var(--grey)]" style="aspect-ratio:4/5;">
+        <img src="${p.images[0]}" alt="${p.name}" loading="lazy" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+      </div>
+      <p class="mt-3 text-sm font-medium leading-tight">${p.name}</p>
+      <p class="text-sm text-gray-500">${fmtPrice(p.price)}</p>
+    </a>`;
   }
-  renderFaqTab();
 
-  // Announcements
-  async function renderAnnouncementsTab() {
-    const snap = await getDoc(doc(db, "settings", "announcements")).catch(() => null);
-    const data = snap?.exists() ? snap.data() : {};
-    document.getElementById("admintab-announcements").innerHTML = `
-      <h1 class="font-display font-bold text-2xl mb-4">Announcements</h1>
-      <div class="glass rounded-xl p-5 space-y-4 max-w-2xl">
-        <div><label class="text-xs font-display tracking-wide text-steel">TICKER MESSAGES (one per line)</label>
-        <textarea id="tickerInput" rows="5" class="mt-1 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm outline-none">${escapeHtml((data.tickerMessages || []).join("\n"))}</textarea></div>
-        <div><label class="text-xs font-display tracking-wide text-steel">ANNOUNCEMENT BAR TEXT</label>
-        <input id="announcementBarInput" value="${escapeHtml(data.announcementBar || "BOOK YOUR SLOTS")}" class="mt-1 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm outline-none" /></div>
-        <button id="saveAnnouncementsBtn" class="bg-bolt font-display font-semibold px-5 py-2.5 rounded-lg text-sm">Save Changes</button>
-      </div>`;
-    document.getElementById("saveAnnouncementsBtn").addEventListener("click", async () => {
-      const tickerMessages = document.getElementById("tickerInput").value.split("\n").map((s) => s.trim()).filter(Boolean);
-      const announcementBar = document.getElementById("announcementBarInput").value;
-      await setDoc(doc(db, "settings", "announcements"), { tickerMessages, announcementBar }, { merge: true });
-      alert("Saved. (Ticker/announcement text pulls from here on future homepage loads.)");
-    });
+  function productGrid(list){
+    return `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10">${list.map(productCard).join("")}</div>`;
   }
-  renderAnnouncementsTab();
 
-  // Settings
-  async function renderSettingsTab() {
-    const snap = await getDoc(doc(db, "settings", "general")).catch(() => null);
-    const data = snap?.exists() ? snap.data() : {};
-    document.getElementById("admintab-settings").innerHTML = `
-      <h1 class="font-display font-bold text-2xl mb-4">Settings</h1>
-      <div class="glass rounded-xl p-5 space-y-4 max-w-xl">
-        <div><label class="text-xs font-display tracking-wide text-steel">CONTACT NUMBER</label><input id="set_contact" value="${escapeHtml(data.contactNumber || CONFIG.contact.primary)}" class="mt-1 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm outline-none" /></div>
-        <div><label class="text-xs font-display tracking-wide text-steel">ALTERNATE NUMBER</label><input id="set_altcontact" value="${escapeHtml(data.alternateNumber || CONFIG.contact.alternate)}" class="mt-1 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm outline-none" /></div>
-        <div><label class="text-xs font-display tracking-wide text-steel">SUPPORT EMAIL</label><input id="set_email" value="${escapeHtml(data.supportEmail || "")}" class="mt-1 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm outline-none" /></div>
-        <button id="saveSettingsBtn" class="bg-bolt font-display font-semibold px-5 py-2.5 rounded-lg text-sm">Save Settings</button>
-      </div>`;
-    document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
-      await setDoc(doc(db, "settings", "general"), { contactNumber: document.getElementById("set_contact").value, alternateNumber: document.getElementById("set_altcontact").value, supportEmail: document.getElementById("set_email").value }, { merge: true });
-      alert("Settings saved.");
-    });
-  }
-  renderSettingsTab();
+  const pages = {
+    home(){
+      const catCardsHtml = CATEGORIES.map((c,i)=>`
+        <a href="#/products/${encodeURIComponent(c)}" class="cat-card block" data-tilt>
+          <div class="cat-card-inner relative overflow-hidden rounded-2xl bg-[var(--grey)]" style="aspect-ratio:3/4;">
+            <img src="https://picsum.photos/seed/aurevia-cat-${i}/700/900" alt="${c}" class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent"></div>
+            <span class="absolute bottom-4 left-4 text-white font-display text-lg tracking-wide">${c}</span>
+          </div>
+        </a>`).join("");
 
-  // Orders (admin)
-  document.getElementById("admintab-orders").innerHTML = `
-    <h1 class="font-display font-bold text-2xl mb-4">Orders</h1>
-    <div class="glass rounded-xl overflow-x-auto"><table class="admin-table"><thead><tr><th>Receipt</th><th>Category</th><th>Slot</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
-    <tbody>${orders.map((o) => `<tr><td class="font-mono text-xs">${escapeHtml(o.receiptNumber || "—")}</td><td>${escapeHtml(o.categoryLabel || o.category)}</td><td>${escapeHtml(o.slotLabel || o.slot || "—")}</td><td>${formatCurrency(o.amount)}</td>
-    <td><span class="pill ${o.paymentStatus === "Paid" ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"}">${escapeHtml(o.paymentStatus)}</span></td><td class="text-xs">${formatDateTime(o.createdAt)}</td></tr>`).join("") || `<tr><td colspan="6" class="text-center text-steel py-6">No orders yet.</td></tr>`}</tbody></table></div>`;
-}
+      return `
+      <section class="relative">
+        <div class="relative w-full overflow-hidden" style="aspect-ratio:16/9;max-height:78vh;">
+          <img src="${HERO_IMG}" alt="Aurevia hero" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-black/20 flex items-end justify-center pb-14">
+            <a href="#/products/all" class="btn-solid rounded-full px-8 py-3 text-sm tracking-wide font-medium">EXPLORE NOW</a>
+          </div>
+        </div>
+      </section>
 
-/* ==========================================================================
-   8. ROUTE TABLE + RENDER LOOP
-========================================================================== */
-const ROUTES = {
-  home: { render: homeView, bind: bindHomeView },
-  "daily-grind": { render: dailyGrindView, bind: bindDailyGrindView },
-  "weekly-war": { render: weeklyWarView, bind: bindWarView },
-  "weekend-war": { render: weekendWarView, bind: bindWarView },
-  tournaments: { render: tournamentsView, bind: bindTournamentsView },
-  "tournament-registration": { render: tournamentRegistrationView, bind: bindTournamentRegistrationView },
-  login: { render: loginView, bind: bindLoginView, hideChrome: false },
-  payment: { render: paymentView, bind: bindPaymentView, protected: true },
-  register: { render: registerView, bind: bindRegisterView, protected: true },
-  success: { render: successView, bind: () => {} },
-  orders: { render: ordersView, bind: bindOrdersView, protected: true },
-  profile: { render: profileView, bind: bindProfileView, protected: true },
-  contact: { render: contactView, bind: () => {} },
-  about: { render: aboutView, bind: () => {} },
-  "admin-login": { render: adminLoginView, bind: bindAdminLoginView },
-  admin: { render: adminView, bind: bindAdminView, adminOnly: true },
-};
+      <section class="max-w-7xl mx-auto px-6 py-16">
+        <h2 class="font-display text-2xl sm:text-3xl text-center mb-10">EXPLORE CATEGORIES</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-5">${catCardsHtml}</div>
+      </section>
 
-function loadingHtml(msg = "Loading…") {
-  return `<div class="min-h-screen flex items-center justify-center"><div class="text-center"><span class="spinner"></span><p class="text-steel text-sm mt-3 font-display">${escapeHtml(msg)}</p></div></div>`;
-}
+      <div class="bg-[var(--red)] text-white py-2.5 overflow-hidden">
+        <div class="marquee-track font-medium text-sm tracking-wide">
+          ${Array(2).fill('<span class="px-8">ALL OVER INDIA DELIVERY AVAILABLE&nbsp; | &nbsp;FREE SHIPPING ABOVE ₹999 ORDERS&nbsp; | &nbsp;100% TRUSTED</span>').join('')}
+        </div>
+      </div>
 
-function observeFadeUp() {
-  const els = document.querySelectorAll(".fade-up:not(.in-view)");
-  if (!els.length) return;
-  if (!("IntersectionObserver" in window)) { els.forEach((el) => el.classList.add("in-view")); return; }
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) { entry.target.classList.add("in-view"); obs.unobserve(entry.target); }
-    });
-  }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
-  els.forEach((el) => obs.observe(el));
-}
+      <section class="max-w-7xl mx-auto px-6 py-16">
+        <a href="#/products/END%20OF%20SEASON%20SALE" class="block relative overflow-hidden rounded-2xl">
+          <img src="${EOS_BANNER}" alt="End of Season Sale" class="w-full object-cover" style="max-height:420px;">
+        </a>
+      </section>
 
-async function render() {
-  const { path, params } = parseHash();
-  const routeDef = ROUTES[path] || { render: notFoundView, bind: () => {} };
+      <section class="max-w-7xl mx-auto px-6 py-16">
+        <h2 class="font-display text-2xl sm:text-3xl mb-4">OUR JOURNEY</h2>
+        <p class="text-gray-600 leading-relaxed max-w-2xl">Every great brand starts with a vision. This section represents the journey, passion and values behind AUREVIA CLOTHING. Replace this text with your original brand story.</p>
+      </section>
 
-  if (routeDef.protected && !authReady) { document.getElementById("app").innerHTML = loadingHtml("Checking your session…"); return; }
-  if (routeDef.protected && authReady && !currentUser) { rememberReturnTo(); window.location.hash = "#/login"; return; }
+      <section class="max-w-7xl mx-auto px-6 pb-20">
+        <div class="flex items-center justify-between mb-8">
+          <h2 class="font-display text-2xl">New Arrivals</h2>
+          <a href="#/products/all" class="text-sm underline">View all →</a>
+        </div>
+        ${productGrid(PRODUCTS.slice(0,8))}
+      </section>`;
+    },
 
-  if (routeDef.adminOnly) {
-    if (!authReady) { document.getElementById("app").innerHTML = loadingHtml("Checking admin access…"); return; }
-    if (!currentUser) { window.location.hash = "#/admin-login"; return; }
-    if (!isAdminChecked) {
-      document.getElementById("app").innerHTML = loadingHtml("Checking admin access…");
-      try { const snap = await withTimeout(getDoc(doc(db, "users", currentUser.uid)), 10000); isAdminUser = snap.exists() && snap.data().role === "admin"; }
-      catch { isAdminUser = false; }
-      isAdminChecked = true;
-      render();
-      return;
+    productsList(categoryParam){
+      const isAll = categoryParam === "all";
+      const cat = decodeURIComponent(categoryParam||"");
+      const list = isAll ? PRODUCTS : PRODUCTS.filter(p=>p.category===cat);
+      const title = isAll ? "All Products" : cat;
+      return `
+      <section class="max-w-7xl mx-auto px-6 py-12">
+        <h1 class="font-display text-3xl mb-2">${title}</h1>
+        <p class="text-sm text-gray-500 mb-10">${list.length} products</p>
+        ${productGrid(list)}
+      </section>`;
+    },
+
+    productDetail(id){
+      const p = productById(id);
+      if(!p) return `<div class="max-w-xl mx-auto px-6 py-20 text-center">Product not found.</div>`;
+      return `
+      <section class="max-w-6xl mx-auto px-6 py-10 grid md:grid-cols-2 gap-10">
+        <div>
+          <div class="relative overflow-hidden rounded-2xl bg-[var(--grey)]" style="aspect-ratio:4/5;">
+            ${p.images.map((img,i)=>`<img data-idx="${i}" src="${img}" class="gallery-slide absolute inset-0 w-full h-full object-cover ${i===0?'':'hide'}">`).join("")}
+            ${p.images.length>1?`
+            <button onclick="AUREVIA.gallery.nav(-1)" class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center">‹</button>
+            <button onclick="AUREVIA.gallery.nav(1)" class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 rounded-full w-9 h-9 flex items-center justify-center">›</button>
+            `:""}
+          </div>
+          ${p.images.length>1?`<div class="flex gap-2 mt-3">${p.images.map((img,i)=>`<img src="${img}" onclick="AUREVIA.gallery.set(${i})" class="w-14 h-16 object-cover rounded-lg cursor-pointer bg-[var(--grey)] ${i===0?'ring-2 ring-black':''}">`).join("")}</div>`:""}
+        </div>
+        <div>
+          <p class="text-xs tracking-widest text-gray-400 uppercase mb-2">${p.category}</p>
+          <h1 class="font-display text-2xl mb-2">${p.name}</h1>
+          <p class="text-xl font-medium mb-4">${fmtPrice(p.price)}</p>
+          <button onclick="AUREVIA.ui.openSizeGuide()" class="text-xs underline text-gray-500 mb-6">Size Guide</button>
+          <p class="text-sm text-gray-600 leading-relaxed mb-6">${p.description}</p>
+
+          <p class="text-xs tracking-wide uppercase text-gray-500 mb-2">Select Size</p>
+          <div id="sizeSelector" class="flex flex-wrap gap-2 mb-6">
+            ${SIZES.map(s=>`<button onclick="AUREVIA.product.selectSize('${s}',this)" class="size-pill px-4 py-2 rounded-full text-xs">${s}</button>`).join("")}
+          </div>
+
+          <div class="flex gap-3">
+            <button onclick="AUREVIA.product.addToCart(${p.id})" class="flex-1 btn-outline rounded-full py-3 text-sm">ADD TO CART</button>
+            <button onclick="AUREVIA.product.buyNow(${p.id})" class="flex-1 btn-solid rounded-full py-3 text-sm">BUY NOW</button>
+          </div>
+        </div>
+      </section>`;
+    },
+
+    cartPage(){
+      if(cart.length===0){
+        return `<div class="max-w-xl mx-auto px-6 py-24 text-center">
+          <p class="text-gray-500 mb-6">Your cart is empty.</p>
+          <a href="#/products/all" class="btn-solid rounded-full px-6 py-3 text-sm">Continue Shopping</a>
+        </div>`;
+      }
+      const rows = cart.map(c=>{
+        const p = productById(c.id);
+        return `<div class="flex gap-4 items-center border-b border-[var(--grey-line)] py-4">
+          <img src="${p.images[0]}" class="w-20 h-24 object-cover rounded-lg bg-[var(--grey)]">
+          <div class="flex-1">
+            <p class="font-medium text-sm">${p.name}</p>
+            <p class="text-xs text-gray-500">Size: ${c.size}</p>
+            <div class="flex items-center gap-2 mt-2">
+              <button onclick="AUREVIA.cart.changeQty(${p.id},'${c.size}',-1)" class="w-7 h-7 border rounded-full text-xs">−</button>
+              <span class="text-xs">${c.qty}</span>
+              <button onclick="AUREVIA.cart.changeQty(${p.id},'${c.size}',1)" class="w-7 h-7 border rounded-full text-xs">+</button>
+              <button onclick="AUREVIA.cart.remove(${p.id},'${c.size}')" class="text-[11px] text-gray-400 underline ml-3">Remove</button>
+            </div>
+          </div>
+          <div class="text-sm font-medium">${fmtPrice(p.price*c.qty)}</div>
+        </div>`;
+      }).join("");
+      return `<section class="max-w-3xl mx-auto px-6 py-12">
+        <h1 class="font-display text-2xl mb-8">Your Cart</h1>
+        ${rows}
+        <div class="flex justify-between items-center mt-8">
+          <span class="text-lg font-medium">Subtotal</span>
+          <span class="text-lg font-medium">${fmtPrice(cartTotal())}</span>
+        </div>
+        <button onclick="AUREVIA.checkout.buyCart()" class="w-full btn-solid rounded-full py-4 mt-6 text-sm">PROCEED TO CHECKOUT</button>
+      </section>`;
+    },
+
+    orderSuccess(params){
+      return `<section class="max-w-lg mx-auto px-6 py-24 text-center">
+        <div class="w-16 h-16 rounded-full bg-black text-white flex items-center justify-center mx-auto mb-6 text-2xl">✓</div>
+        <h1 class="font-display text-2xl mb-3">Order Placed</h1>
+        <p class="text-gray-500 text-sm mb-1">Order ID: ${params.orderId||"—"}</p>
+        <p class="text-gray-500 text-sm mb-8">Amount Paid: ${fmtPrice(params.amount||0)}</p>
+        <a href="#/products/all" class="btn-solid rounded-full px-6 py-3 text-sm">Continue Shopping</a>
+      </section>`;
+    },
+
+    about(){
+      return `<section class="max-w-3xl mx-auto px-6 py-16">
+        <h1 class="font-display text-3xl mb-8">About Us</h1>
+        <div class="space-y-4 text-gray-700 leading-relaxed">
+          <p>Welcome to AUREVIA CLOTHING – your ultimate destination for premium sports jerseys and stylish apparel.</p>
+          <p>AUREVIA CLOTHING was created with a vision to provide high-quality, affordable, and trendy apparel for true fashion lovers across India.</p>
+          <p>We focus on delivering premium designs, comfortable fabric, and the latest collections inspired by modern trends.</p>
+          <p>Our goal is simple – to bring you the best combination of style, quality, and value.</p>
+          <h3 class="font-display text-xl pt-4">Why Choose AUREVIA CLOTHING?</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Premium Quality Products</li><li>Affordable Pricing</li><li>PAN India Delivery</li><li>Trusted Service</li>
+          </ul>
+          <p>We are passionate about fashion and aim to deliver products that represent your personality.</p>
+          <h3 class="font-display text-xl pt-4">Contact Details</h3>
+          <p>Name: UMER BUNIYAD TAKILDAR<br>Phone: 7385009275<br>Address: Darga Galli Ajara, Kolhapur, Maharashtra</p>
+        </div>
+      </section>`;
+    },
+    contact(){
+      return `<section class="max-w-xl mx-auto px-6 py-16">
+        <h1 class="font-display text-3xl mb-8">Contact Us</h1>
+        <p class="text-gray-700">UMER BUNIYAD TAKILDAR</p>
+        <p class="text-gray-700">Phone: <a class="underline" href="tel:+917385009275">7385009275</a></p>
+        <p class="text-gray-700">Address: Darga Galli Ajara, Kolhapur, Maharashtra</p>
+        <p class="text-gray-700 mt-4">Instagram: <a class="underline" href="https://instagram.com/um3rx70" target="_blank">um3rx70</a></p>
+      </section>`;
+    },
+    legal(title, body){
+      return `<section class="max-w-2xl mx-auto px-6 py-16">
+        <h1 class="font-display text-3xl mb-6">${title}</h1>
+        <p class="text-gray-600 leading-relaxed">${body}</p>
+      </section>`;
     }
-    if (!isAdminUser) { document.getElementById("app").innerHTML = layout(forbiddenView()); return; }
-  }
+  };
 
-  const contentHtml = routeDef.render(params) || "";
-  document.getElementById("app").innerHTML = layout(contentHtml, { hideChrome: false });
-  bindGlobalChrome();
-  routeDef.bind(params);
-  requestAnimationFrame(observeFadeUp);
-}
+  /* ---------- Gallery nav on product page ---------- */
+  const gallery = {
+    idx: 0,
+    set(i){
+      const slides = document.querySelectorAll(".gallery-slide");
+      slides.forEach(s=> s.classList.toggle("hide", Number(s.dataset.idx)!==i));
+      document.querySelectorAll("[onclick^='AUREVIA.gallery.set']").forEach((el,ei)=> el.classList.toggle("ring-2", ei===i));
+      gallery.idx = i;
+    },
+    nav(dir){
+      const slides = document.querySelectorAll(".gallery-slide");
+      const n = slides.length;
+      gallery.set((gallery.idx + dir + n) % n);
+    }
+  };
 
-/* ==========================================================================
-   9. GLOBAL CHROME BINDINGS (header, search, menu) — re-attached every render
-========================================================================== */
-function bindGlobalChrome() {
-  const header = document.getElementById("siteHeader");
-  if (header) window.addEventListener("scroll", () => header.classList.toggle("scrolled", window.scrollY > 8), { passive: true });
+  /* ---------- Product page interactions ---------- */
+  const product = {
+    selectedSize: null,
+    selectSize(s, el){
+      product.selectedSize = s;
+      document.querySelectorAll("#sizeSelector .size-pill").forEach(b=>b.classList.remove("selected"));
+      el.classList.add("selected");
+    },
+    addToCart(id){
+      if(!product.selectedSize){ showToast("Please select a size"); return; }
+      addToCart(id, product.selectedSize, 1);
+    },
+    buyNow(id){
+      if(!product.selectedSize){ showToast("Please select a size"); return; }
+      checkout.buyNow(id, product.selectedSize);
+    }
+  };
 
-  // Profile dropdown
-  const profileBtn = document.getElementById("profileBtn");
-  const profileMenu = document.getElementById("profileMenu");
-  if (profileBtn && profileMenu) {
-    profileMenu.innerHTML = currentUser
-      ? `<a href="#/profile" class="block px-4 py-3 text-white hover:bg-white/5">Profile</a><a href="#/profile" class="block px-4 py-3 text-white hover:bg-white/5">My Account</a><button id="headerLogoutBtn" class="block w-full text-left px-4 py-3 text-white hover:bg-white/5">Logout</button>`
-      : `<a href="#/login" class="block px-4 py-3 text-white hover:bg-white/5">Login</a>`;
-    profileBtn.addEventListener("click", () => profileMenu.classList.toggle("hidden"));
-    document.addEventListener("click", (e) => { if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) profileMenu.classList.add("hidden"); }, { once: true });
-    const logoutBtn = document.getElementById("headerLogoutBtn");
-    if (logoutBtn) logoutBtn.addEventListener("click", async () => { await signOut(auth); window.location.hash = "#/home"; });
-  }
-
-  // Hamburger menu
-  const menuBtn = document.getElementById("menuBtn"), menuClose = document.getElementById("menuClose");
-  const slideMenu = document.getElementById("slideMenu"), menuOverlay = document.getElementById("menuOverlay");
-  if (menuBtn) {
-    menuBtn.addEventListener("click", () => { slideMenu.classList.remove("translate-x-full"); menuOverlay.classList.remove("hidden"); });
-    menuClose.addEventListener("click", () => { slideMenu.classList.add("translate-x-full"); menuOverlay.classList.add("hidden"); });
-    menuOverlay.addEventListener("click", () => { slideMenu.classList.add("translate-x-full"); menuOverlay.classList.add("hidden"); });
-  }
-
-  // Search overlay with fuzzy matching
-  const searchBtn = document.getElementById("searchBtn"), searchOverlay = document.getElementById("searchOverlay");
-  const searchInput = document.getElementById("searchInput"), searchClose = document.getElementById("searchClose"), searchResults = document.getElementById("searchResults");
-  if (searchBtn) {
-    searchBtn.addEventListener("click", () => { searchOverlay.classList.remove("hidden"); searchInput.focus(); });
-    searchClose.addEventListener("click", () => { searchOverlay.classList.add("hidden"); searchInput.value = ""; searchResults.innerHTML = ""; });
-    searchOverlay.addEventListener("click", (e) => { if (e.target === searchOverlay) { searchOverlay.classList.add("hidden"); searchInput.value = ""; searchResults.innerHTML = ""; } });
-    searchInput.addEventListener("input", () => {
-      const q = searchInput.value.trim();
-      if (!q) { searchResults.innerHTML = ""; return; }
-      const ranked = PAGE_SEARCH_INDEX.map((item) => ({ ...item, score: Math.min(fuzzyScore(q, item.title), ...item.keywords.map((k) => fuzzyScore(q, k))) }))
-        .filter((i) => i.score <= 3).sort((a, b) => a.score - b.score);
-      searchResults.innerHTML = ranked.length
-        ? ranked.map((r) => `<li><a href="${r.url}" class="block px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 text-white font-display">${escapeHtml(r.title)}</a></li>`).join("")
-        : `<li class="text-white/40 px-4">No matches found.</li>`;
+  /* ---------- 3D tilt for category cards ---------- */
+  function bindTilt(){
+    document.querySelectorAll(".cat-card").forEach(card=>{
+      const inner = card.querySelector(".cat-card-inner");
+      card.addEventListener("mousemove", e=>{
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left)/r.width - .5;
+        const y = (e.clientY - r.top)/r.height - .5;
+        inner.style.transform = `rotateY(${x*10}deg) rotateX(${-y*10}deg) scale(1.02)`;
+      });
+      card.addEventListener("mouseleave", ()=>{ inner.style.transform = "rotateY(0) rotateX(0) scale(1)"; });
+      let touchStartX=0;
+      card.addEventListener("touchstart", e=>{ touchStartX = e.touches[0].clientX; }, {passive:true});
+      card.addEventListener("touchmove", e=>{
+        const dx = e.touches[0].clientX - touchStartX;
+        inner.style.transform = `rotateY(${dx/12}deg) scale(1.02)`;
+      }, {passive:true});
+      card.addEventListener("touchend", ()=>{ inner.style.transform = "rotateY(0) scale(1)"; });
     });
   }
-}
 
-/* ==========================================================================
-   10. BOOTSTRAP
-========================================================================== */
-window.addEventListener("hashchange", render);
-onAuthStateChanged(auth, (user) => {
-  currentUser = user; authReady = true;
-  if (!user) { isAdminChecked = false; isAdminUser = false; }
-  render();
-});
-if (!window.location.hash) window.location.hash = "#/home"; else render();
+  /* ---------- swipe for product gallery ---------- */
+  function bindGallerySwipe(){
+    const box = document.querySelector("main");
+    let startX = null;
+    box.addEventListener("touchstart", e=>{
+      if(e.target.closest(".gallery-slide") || e.target.closest("[data-idx]")) startX = e.touches[0].clientX;
+    }, {passive:true});
+    box.addEventListener("touchend", e=>{
+      if(startX===null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if(Math.abs(dx) > 40) gallery.nav(dx>0?-1:1);
+      startX = null;
+    }, {passive:true});
+  }
 
+  /* ---------- Router ---------- */
+  const router = {
+    go(hash, params){ router._params = params||{}; location.hash = hash; },
+    _params: {},
+    render(){
+      const hash = location.hash || "#/home";
+      const parts = hash.replace("#/","").split("/");
+      const root = document.getElementById("pageRoot");
+      root.classList.remove("view"); void root.offsetWidth; root.classList.add("view");
+      window.scrollTo({top:0, behavior:"instant"});
+
+      if(parts[0]==="home"){ root.innerHTML = pages.home(); bindTilt(); }
+      else if(parts[0]==="products"){ root.innerHTML = pages.productsList(parts[1]); }
+      else if(parts[0]==="product"){ root.innerHTML = pages.productDetail(parts[1]); bindGallerySwipe(); }
+      else if(parts[0]==="cart"){ root.innerHTML = pages.cartPage(); }
+      else if(parts[0]==="order-success"){ root.innerHTML = pages.orderSuccess(router._params); }
+      else if(parts[0]==="about"){ root.innerHTML = pages.about(); }
+      else if(parts[0]==="contact"){ root.innerHTML = pages.contact(); }
+      else if(parts[0]==="terms"){ root.innerHTML = pages.legal("Terms of Service","These are placeholder Terms of Service for AUREVIA CLOTHING. Replace with your final legal copy covering site usage, orders, and liability."); }
+      else if(parts[0]==="privacy"){ root.innerHTML = pages.legal("Privacy Policy","This is a placeholder Privacy Policy for AUREVIA CLOTHING describing how customer data is collected, stored in Firebase, and used to process orders."); }
+      else if(parts[0]==="shipping"){ root.innerHTML = pages.legal("Shipping Policy","Placeholder Shipping Policy: AUREVIA CLOTHING delivers PAN India. Free shipping on orders above ₹999. Replace with your final courier & timelines copy."); }
+      else if(parts[0]==="return"){ root.innerHTML = pages.legal("Return Policy","Placeholder Return Policy: items can be returned within a defined window in original condition. Replace with your final return/exchange terms."); }
+      else { root.innerHTML = pages.home(); bindTilt(); }
+    }
+  };
+  window.addEventListener("hashchange", router.render);
+
+  /* ---------- expose public API ---------- */
+  return {
+    ui, search, checkout, auth, cart: { changeQty, remove: removeFromCart },
+    gallery, product, router
+  };
+})();
 </script>
-
-<!-- ==========================================================================
-BACKEND REFERENCE (documentation only — NOT part of this single HTML file)
---------------------------------------------------------------------------
-This app already takes real payments client-side via Razorpay Checkout —
-no backend required to get started. What a backend adds is tamper-proof
-verification: right now the amount charged comes from the page, and the
-payment is accepted on Razorpay's client-side success callback alone.
-When you're ready to harden that, deploy this alongside the site
-(Firebase Cloud Functions is a convenient option) and point
-CONFIG.backendBaseUrl at it — createOrderRequest() and
-verifyPaymentRequest() in this file already switch to the safer path
-automatically once backendBaseUrl is set:
-
-  POST {backendBaseUrl}/createOrder   { category, slot, tournamentId, uid }
-    -> looks up the REAL price server-side (never trusts the frontend),
-       creates a Razorpay Order via the Orders API using your Razorpay
-       Key Secret (never exposed to the browser), and returns
-       { amount, orderId } for Razorpay Checkout to use
-
-  POST {backendBaseUrl}/verifyPayment { razorpay_order_id, razorpay_payment_id,
-                                         razorpay_signature, category, slot,
-                                         tournamentId, uid }
-    -> recomputes the HMAC-SHA256 signature server-side with your Razorpay
-       Key Secret: hmac_sha256(order_id + "|" + payment_id, KEY_SECRET)
-       rejects on mismatch or replay, and only then returns
-       { verified: true, paymentId }
-    -> optionally cross-check with Razorpay's Payments API server-side
-       for extra safety before marking anything Paid
-
-  POST {backendBaseUrl}/notify        { channel, event, payload }
-    -> forwards admin-only notifications (new registration, payment issues)
-       to WhatsApp Business API / Telegram bot / email, using secrets that
-       also never touch the frontend
-
-Firestore Security Rules (deploy separately, not embedded in HTML):
-  - users/{uid}: owner or admin only
-  - registrations/{id}, orders/{id}: creator (uid match) can create/read own;
-    only admin can update/delete
-  - tournaments, scrims, faq, announcements, whatsapp_links, settings:
-    public read, admin-only write (check users/{uid}.role == 'admin')
-  - payment_logs: no client access at all — Admin SDK only
-========================================================================== -->
 </body>
 </html>
