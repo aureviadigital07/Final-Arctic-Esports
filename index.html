@@ -390,9 +390,9 @@
   </div>
 </div>
 
-<!-- GOKWIK CHECKOUT PLACEHOLDER MODAL -->
-<div id="gokwik-overlay" class="overlay-bg fixed inset-0 bg-black/60 z-[95] flex items-center justify-center px-4">
-  <div class="bg-white max-w-sm w-full rounded-sm p-6" id="gokwik-modal-body"></div>
+<!-- PAYU CHECKOUT MODAL (customer details / processing / error states) -->
+<div id="payu-overlay" class="overlay-bg fixed inset-0 bg-black/60 z-[95] flex items-center justify-center px-4">
+  <div class="bg-white max-w-sm w-full rounded-sm p-6" id="payu-modal-body"></div>
 </div>
 
 <script>
@@ -405,7 +405,7 @@
    4. Cart engine
    5. Auth flows (Google / Facebook / Email / Phone OTP)
    6. Router + page renderers
-   7. UI widgets (drawer, search, size guide, category tilt, GoKwik)
+   7. UI widgets (drawer, search, size guide, category tilt, PayU checkout)
    8. Boot
 ===================================================================== */
 
@@ -1050,6 +1050,29 @@ function renderStaticPage(key){
   </section>`;
 }
 
+function renderVerifyingPayment(){
+  return `<section class="max-w-lg mx-auto px-6 py-24 text-center">
+    <svg class="spin mx-auto mb-6" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-opacity=".2"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>
+    <h1 class="font-display text-2xl mb-3">Confirming Your Payment</h1>
+    <p class="text-sm text-[#4a4a4a]">Please wait a moment while we verify your transaction securely with our payment partner.</p>
+  </section>`;
+}
+
+function renderVerificationError(txnid){
+  return `<section class="max-w-lg mx-auto px-6 py-24 text-center">
+    <div class="w-14 h-14 rounded-full bg-[#B21F24]/10 text-[#B21F24] flex items-center justify-center mx-auto mb-6">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+    </div>
+    <h1 class="font-display text-2xl mb-3">Couldn't Confirm Payment</h1>
+    <p class="text-sm text-[#8A8783] mb-1">Transaction ID: ${txnid}</p>
+    <p class="text-sm text-[#4a4a4a] mb-8">We weren't able to verify this payment's status right now. Your bag has not been changed. Please retry verification, or contact us if this persists.</p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <button id="btn-verify-retry" class="btn-primary">Retry Verification</button>
+      <a href="#/cart" class="btn-outline">Return to Cart</a>
+    </div>
+  </section>`;
+}
+
 function renderOrderSuccess(orderId){
   return `<section class="max-w-lg mx-auto px-6 py-24 text-center">
     <div class="w-14 h-14 rounded-full bg-[#111111] text-white flex items-center justify-center mx-auto mb-6">
@@ -1059,6 +1082,21 @@ function renderOrderSuccess(orderId){
     <p class="text-sm text-[#8A8783] mb-1">Order ID: ${orderId}</p>
     <p class="text-sm text-[#4a4a4a] mb-8">Thank you for shopping with Aurevia Clothing. A confirmation has been saved to your account.</p>
     <a href="#/products" class="btn-primary">Continue Shopping</a>
+  </section>`;
+}
+
+function renderPaymentFailed(txnid){
+  return `<section class="max-w-lg mx-auto px-6 py-24 text-center">
+    <div class="w-14 h-14 rounded-full bg-[#B21F24]/10 text-[#B21F24] flex items-center justify-center mx-auto mb-6">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+    </div>
+    <h1 class="font-display text-2xl mb-3">Payment Failed</h1>
+    <p class="text-sm text-[#8A8783] mb-1">Transaction ID: ${txnid}</p>
+    <p class="text-sm text-[#4a4a4a] mb-8">Your payment could not be completed. Your bag has been kept safe — you can retry or review it below.</p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <button id="btn-retry-payment" class="btn-primary">Retry Payment</button>
+      <a href="#/cart" class="btn-outline">Return to Cart</a>
+    </div>
   </section>`;
 }
 
@@ -1088,9 +1126,18 @@ function router(){
     page.innerHTML = renderCartPage();
     bindCartLineEvents(page);
     const btn = document.getElementById('btn-checkout-page');
-    if(btn) btn.onclick = ()=>openGoKwikCheckout();
-  }else if(parts[0]==='order-success'){
-    page.innerHTML = renderOrderSuccess(parts[1] || '—');
+    if(btn) btn.onclick = ()=>startPayUCheckout();
+  }else if(parts[0]==='order-success' || parts[0]==='payment-failed'){
+    // Xano is the source of truth here — the route only reflects PayU's
+    // redirect intent, never the confirmed outcome. We always verify
+    // with the backend before touching Firestore or showing a final state.
+    page.innerHTML = renderVerifyingPayment();
+    const txnid = getTxnIdFromLocation();
+    if(!txnid){
+      page.innerHTML = renderVerificationError('Unknown');
+    }else{
+      runPaymentVerification(txnid);
+    }
   }else if(STATIC_PAGES[parts[0]]){
     page.innerHTML = renderStaticPage(parts[0]);
   }else{
@@ -1145,7 +1192,7 @@ function initProductPage(id){
   document.getElementById('btn-buy-now').onclick = ()=>{
     if(!selectedSize){ document.getElementById('size-required-msg').classList.remove('hidden'); return; }
     addToCart(p.id, selectedSize, 1);
-    openGoKwikCheckout();
+    startPayUCheckout();
   };
 
   document.getElementById('btn-open-sizeguide').onclick = openSizeGuide;
@@ -1237,54 +1284,253 @@ function initTiltCards(){
     card.addEventListener('mouseleave', ()=>{ card.style.transform = 'rotateY(0) rotateX(0) translateY(0)'; });
   });
 }
-// ---- GoKwik checkout placeholder ----
-function openGoKwikCheckout(){
-  const cart = getCart();
-  if(cart.length===0){ toast('Your bag is empty'); return; }
-  const total = cartTotal();
-  const body = document.getElementById('gokwik-modal-body');
+// ---- PayU Checkout (via Xano backend) ----
+const XANO_CREATE_PAYMENT_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:AMOGxV05/create-payment';
+const PENDING_TXN_KEY = 'aurevia_pending_txn';
+
+function generateTxnId(){
+  return 'AUR' + Date.now().toString(36).toUpperCase() + Math.floor(Math.random()*9000+1000);
+}
+function checkoutAmount(cart){
+  const total = cart.reduce((sum,c)=>{ const p=PRODUCT_BY_ID[c.productId]; return p ? sum + p.price*c.qty : sum; },0);
+  return total>=999 ? total : total+99;
+}
+function buildProductInfo(cart){
+  const summary = cart.map(c=>{ const p=PRODUCT_BY_ID[c.productId]; return p ? `${p.name} x${c.qty}` : ''; }).filter(Boolean).join(', ');
+  return summary.length > 250 ? summary.slice(0,247)+'…' : summary;
+}
+function openPayUModal(){ document.getElementById('payu-overlay').classList.add('open'); }
+function closePayUModal(){ document.getElementById('payu-overlay').classList.remove('open'); }
+
+// Ask for any customer detail missing from the Firebase profile (name / email / phone).
+// Resolves with {firstname,lastname,email,phone} or null if the user cancels.
+function resolveCustomerDetails(){
+  return new Promise(resolve=>{
+    const user = firebaseReady ? auth.currentUser : null;
+    const nameParts = (user && user.displayName ? user.displayName.trim() : '').split(' ');
+    const draft = {
+      firstname: nameParts[0] || '',
+      lastname: nameParts.slice(1).join(' ') || '',
+      email: (user && user.email) || '',
+      phone: (user && user.phoneNumber ? user.phoneNumber.replace(/^\+91/, '') : '') || ''
+    };
+    if(draft.firstname && draft.email && draft.phone){ resolve(draft); return; }
+
+    const body = document.getElementById('payu-modal-body');
+    body.innerHTML = `
+      <div class="text-center mb-5">
+        <p class="text-[10px] uppercase tracking-widest text-[#8A8783] mb-1">One Last Step</p>
+        <h2 class="font-display text-xl">Confirm Your Details</h2>
+        <p class="text-xs text-[#8A8783] mt-1">Needed to generate your secure payment link.</p>
+      </div>
+      <div class="space-y-3">
+        <input type="text" id="cd-firstname" placeholder="First name" value="${draft.firstname}">
+        <input type="text" id="cd-lastname" placeholder="Last name" value="${draft.lastname}">
+        <input type="email" id="cd-email" placeholder="Email address" value="${draft.email}">
+        <input type="tel" id="cd-phone" placeholder="Phone number" value="${draft.phone}">
+        <p id="cd-error" class="hidden text-xs text-[#B21F24]"></p>
+        <button id="cd-continue" class="btn-primary w-full">Continue to Payment</button>
+        <button id="cd-cancel" class="btn-outline w-full">Cancel</button>
+      </div>`;
+    openPayUModal();
+    document.getElementById('cd-cancel').onclick = ()=>{ closePayUModal(); resolve(null); };
+    document.getElementById('cd-continue').onclick = ()=>{
+      const firstname = document.getElementById('cd-firstname').value.trim();
+      const lastname = document.getElementById('cd-lastname').value.trim();
+      const email = document.getElementById('cd-email').value.trim();
+      const phone = document.getElementById('cd-phone').value.trim();
+      const errEl = document.getElementById('cd-error');
+      if(!firstname || !email || !phone){ errEl.textContent = 'Please fill in first name, email and phone.'; errEl.classList.remove('hidden'); return; }
+      if(!/^\S+@\S+\.\S+$/.test(email)){ errEl.textContent = 'Please enter a valid email address.'; errEl.classList.remove('hidden'); return; }
+      if(phone.replace(/\D/g,'').length < 10){ errEl.textContent = 'Please enter a valid phone number.'; errEl.classList.remove('hidden'); return; }
+      resolve({ firstname, lastname: lastname || '-', email, phone: phone.replace(/\D/g,'') });
+    };
+  });
+}
+
+function showPayUProcessing(){
+  const body = document.getElementById('payu-modal-body');
+  body.innerHTML = `
+    <div class="text-center py-6">
+      <svg class="spin mx-auto mb-4" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-opacity=".2"/><path d="M21 12a9 9 0 0 0-9-9"/></svg>
+      <p class="text-sm">Connecting to secure payment gateway…</p>
+      <p class="text-xs text-[#8A8783] mt-1">Please don't close this window.</p>
+    </div>`;
+  openPayUModal();
+}
+
+function showPayUError(message, onRetry){
+  const body = document.getElementById('payu-modal-body');
   body.innerHTML = `
     <div class="text-center mb-5">
-      <p class="text-[10px] uppercase tracking-widest text-[#8A8783] mb-1">Secure Checkout</p>
-      <h2 class="font-display text-xl">GoKwik Checkout</h2>
+      <div class="w-12 h-12 rounded-full bg-[#B21F24]/10 text-[#B21F24] flex items-center justify-center mx-auto mb-4">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+      </div>
+      <h2 class="font-display text-xl">Payment Couldn't Start</h2>
+      <p class="text-xs text-[#8A8783] mt-2">${message}</p>
     </div>
-    <div class="border border-[#E4E3E0] rounded p-4 mb-5">
-      <div class="flex justify-between text-sm mb-2"><span>Items (${cartCount()})</span><span>${inr(total)}</span></div>
-      <div class="flex justify-between text-sm mb-2"><span>Shipping</span><span>${total>=999?'Free':inr(99)}</span></div>
-      <div class="flex justify-between text-sm font-medium pt-2 border-t border-[#E4E3E0]"><span>Total</span><span>${inr(total>=999?total:total+99)}</span></div>
-    </div>
-    <p class="text-[11px] text-[#8A8783] mb-5">This is an integration placeholder for GoKwik Checkout. Connect your GoKwik merchant credentials server-side to enable live payments.</p>
-    <button id="btn-gokwik-pay" class="btn-primary w-full">Pay Now</button>
-    <button id="btn-gokwik-cancel" class="btn-outline w-full mt-3">Cancel</button>
-  `;
-  document.getElementById('gokwik-overlay').classList.add('open');
-  document.getElementById('btn-gokwik-cancel').onclick = ()=>document.getElementById('gokwik-overlay').classList.remove('open');
-  document.getElementById('btn-gokwik-pay').onclick = async ()=>{
-    const payBtn = document.getElementById('btn-gokwik-pay');
-    setBtnLoading(payBtn, true);
-    const orderId = 'AUR' + Date.now().toString().slice(-8);
-    try{
-      if(firebaseReady && auth.currentUser){
-        await db.collection('orders').doc(orderId).set({
-          orderId, uid: auth.currentUser.uid, items: cart, total,
-          status: 'paid', createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        await db.collection('payments').doc(orderId).set({
-          orderId, uid: auth.currentUser.uid, amount: total, provider:'gokwik-placeholder',
-          status:'success', createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    }catch(e){ console.warn('Order save skipped:', e.message); }
-    saveCart([]);
-    document.getElementById('gokwik-overlay').classList.remove('open');
-    location.hash = '#/order-success/' + orderId;
-    toast('Payment successful');
+    <button id="payu-err-retry" class="btn-primary w-full">Retry</button>
+    <button id="payu-err-cancel" class="btn-outline w-full mt-3">Cancel</button>`;
+  document.getElementById('payu-err-cancel').onclick = closePayUModal;
+  document.getElementById('payu-err-retry').onclick = onRetry;
+}
+
+// Dynamically build the PayU hosted-checkout form and auto-submit it.
+function submitToPayU(fields){
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = fields.payu_url || 'https://secure.payu.in/_payment';
+  ['key','txnid','amount','firstname','lastname','email','phone','productinfo','hash','surl','furl'].forEach(k=>{
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = k;
+    input.value = fields[k] != null ? fields[k] : '';
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+}
+
+// Full flow: cart -> Xano create-payment -> hidden form -> PayU redirect.
+async function createPayUPaymentAndRedirect(cart, amount, customer){
+  showPayUProcessing();
+  const txnid = generateTxnId();
+  const payload = {
+    amount,
+    firstname: customer.firstname,
+    lastname: customer.lastname,
+    email: customer.email,
+    phone: customer.phone,
+    productinfo: buildProductInfo(cart),
+    transaction_id: txnid
   };
+  try{
+    const res = await fetch(XANO_CREATE_PAYMENT_URL, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error('Payment service returned an error (' + res.status + ').');
+    const data = await res.json();
+    const required = ['key','txnid','amount','firstname','email','phone','productinfo','hash','payu_url','surl','furl'];
+    const missing = required.filter(k => data[k]===undefined || data[k]===null || data[k]==='');
+    if(missing.length){ throw new Error('Payment service response was incomplete.'); }
+
+    // Stash what we need to reconcile the order once PayU redirects back.
+    localStorage.setItem(PENDING_TXN_KEY, JSON.stringify({
+      txnid: data.txnid, amount: data.amount, items: cart, customer, createdAt: Date.now()
+    }));
+    submitToPayU(data);
+    // Browser is navigating away to PayU now — no further UI updates needed here.
+  }catch(e){
+    console.error('PayU payment creation failed:', e);
+    showPayUError(
+      'We could not reach the payment gateway. Please check your connection and try again.',
+      ()=>createPayUPaymentAndRedirect(cart, amount, customer)
+    );
+  }
+}
+
+// Entry point used by Buy Now / cart drawer / cart page checkout buttons.
+async function startPayUCheckout(){
+  const cart = getCart();
+  if(cart.length===0){ toast('Your bag is empty'); return; }
+  const amount = checkoutAmount(cart);
+  const customer = await resolveCustomerDetails();
+  if(!customer) return;
+  await createPayUPaymentAndRedirect(cart, amount, customer);
+}
+
+// Xano is the authority on payment status. This GET call hits Xano's own
+// record of the transaction (populated when PayU called Xano's
+// /payu/success or /payu/failure endpoints server-side) — never inferred
+// from which page PayU happened to redirect the browser to.
+const XANO_VERIFY_PAYMENT_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:AMOGxV05/payu/verify';
+async function verifyPaymentWithXano(txnid){
+  const res = await fetch(`${XANO_VERIFY_PAYMENT_URL}/${encodeURIComponent(txnid)}`);
+  if(!res.ok) throw new Error('Verification request failed (' + res.status + ')');
+  const data = await res.json();
+  if(!data || !data.payment_status) throw new Error('Verification response was incomplete.');
+  return data; // expected: { transaction_id, payment_status: 'success'|'failure', amount, ... }
+}
+
+// Extract the transaction id Xano's redirect handed back to us. Xano's
+// success/failure endpoints append it as a query param after redirecting
+// to our order-success / payment-failed routes; we also fall back to the
+// locally stashed pending order in case the query param is ever omitted.
+function getTxnIdFromLocation(){
+  const params = new URLSearchParams(location.search);
+  if(params.get('txnid')) return params.get('txnid');
+  const hashQuery = location.hash.split('?')[1];
+  if(hashQuery){ const p = new URLSearchParams(hashQuery); if(p.get('txnid')) return p.get('txnid'); }
+  const pathParts = location.hash.split('?')[0].replace('#/','').split('/').filter(Boolean);
+  if(pathParts[1]) return pathParts[1];
+  try{
+    const pending = JSON.parse(localStorage.getItem(PENDING_TXN_KEY) || 'null');
+    if(pending && pending.txnid) return pending.txnid;
+  }catch(e){}
+  return null;
+}
+
+// Write Firestore only once Xano has confirmed the outcome — this is the
+// single place order/payment records get created.
+async function recordConfirmedPayment(txnid, status, xanoResult){
+  if(!firebaseReady || !auth.currentUser) return;
+  let pending = null;
+  try{ pending = JSON.parse(localStorage.getItem(PENDING_TXN_KEY) || 'null'); }catch(e){}
+  const amount = (xanoResult && xanoResult.amount) || (pending && pending.amount) || null;
+  const items = (pending && pending.items) || [];
+  const customer = (pending && pending.customer) || (xanoResult && xanoResult.customer_details) || {};
+  try{
+    await db.collection('orders').doc(txnid).set({
+      transaction_id: txnid,
+      uid: auth.currentUser.uid,
+      payment_status: status,
+      amount, products: items, customer_details: customer,
+      verifiedByBackend: true,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true });
+    await db.collection('payments').doc(txnid).set({
+      transaction_id: txnid,
+      uid: auth.currentUser.uid,
+      payment_status: status,
+      amount, provider: 'payu',
+      verifiedByBackend: true,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true });
+  }catch(e){ console.warn('Order/payment save skipped:', e.message); }
+}
+
+// Called by the router whenever we land on #/order-success or
+// #/payment-failed. Always re-confirms with Xano before deciding what to
+// show or writing anything to Firestore — the route itself is only a hint.
+async function runPaymentVerification(txnid){
+  const page = document.getElementById('page-content');
+  try{
+    const result = await verifyPaymentWithXano(txnid);
+    const status = result.payment_status === 'success' ? 'success' : 'failure';
+    await recordConfirmedPayment(txnid, status, result);
+    if(status === 'success'){
+      saveCart([]);
+      localStorage.removeItem(PENDING_TXN_KEY);
+      page.innerHTML = renderOrderSuccess(txnid);
+    }else{
+      localStorage.removeItem(PENDING_TXN_KEY);
+      page.innerHTML = renderPaymentFailed(txnid);
+      const retryBtn = document.getElementById('btn-retry-payment');
+      if(retryBtn) retryBtn.onclick = ()=>startPayUCheckout();
+    }
+  }catch(e){
+    console.error('Payment verification failed:', e);
+    page.innerHTML = renderVerificationError(txnid);
+    const retryBtn = document.getElementById('btn-verify-retry');
+    if(retryBtn) retryBtn.onclick = ()=>runPaymentVerification(txnid);
+  }
 }
 
 function closeAllOverlays(){
   closeDrawer(); closeCartDrawer(); closeSearch(); closeSizeGuide();
-  document.getElementById('gokwik-overlay').classList.remove('open');
+  document.getElementById('payu-overlay').classList.remove('open');
 }
 
 /* ---------------------------------------------------------------
@@ -1300,7 +1546,7 @@ function bindGlobalUI(){
   document.getElementById('btn-close-cart').onclick = closeCartDrawer;
   document.getElementById('cart-overlay').onclick = closeCartDrawer;
   document.getElementById('btn-view-cart').addEventListener('click', closeCartDrawer);
-  document.getElementById('btn-checkout-drawer').onclick = ()=>{ closeCartDrawer(); openGoKwikCheckout(); };
+  document.getElementById('btn-checkout-drawer').onclick = ()=>{ closeCartDrawer(); startPayUCheckout(); };
 
   document.getElementById('btn-search').onclick = openSearch;
   document.getElementById('btn-search-mobile').onclick = openSearch;
@@ -1313,7 +1559,7 @@ function bindGlobalUI(){
   document.getElementById('sg-prev').onclick = ()=>{ sgIdx = (sgIdx-1+SIZE_GUIDE_IMAGES.length)%SIZE_GUIDE_IMAGES.length; updateSizeGuide(); };
   document.getElementById('sg-next').onclick = ()=>{ sgIdx = (sgIdx+1)%SIZE_GUIDE_IMAGES.length; updateSizeGuide(); };
 
-  document.getElementById('gokwik-overlay').addEventListener('click', e=>{ if(e.target.id==='gokwik-overlay') e.currentTarget.classList.remove('open'); });
+  document.getElementById('payu-overlay').addEventListener('click', e=>{ if(e.target.id==='payu-overlay') e.currentTarget.classList.remove('open'); });
 
   document.getElementById('btn-account').onclick = ()=>{ openDrawer(); };
 
