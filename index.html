@@ -133,6 +133,26 @@
     transition:border-color .2s ease;
   }
   input:focus{border-color:var(--ink); outline:none;}
+  select{
+    border:1px solid var(--grey-line); background:#fff; padding:.85rem 1rem; font-size:.9rem; width:100%; border-radius:2px;
+    appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='1.6'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right .9rem center; background-size:1rem;
+  }
+  select:focus{border-color:var(--ink); outline:none;}
+  .option-chip{border:1px solid var(--grey-line); padding:.9rem 1rem; cursor:pointer; border-radius:2px; transition:all .2s ease;}
+  .option-chip:hover{border-color:var(--ink);}
+  .option-chip.selected{border-color:var(--ink); background:var(--grey);}
+
+  /* ---- Floating WhatsApp button ---- */
+  #whatsapp-float{
+    position:fixed; right:1.25rem; bottom:1.25rem; z-index:55;
+    width:3.25rem; height:3.25rem; border-radius:50%; background:#111111;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 26px rgba(0,0,0,.25); transition:transform .25s ease;
+  }
+  #whatsapp-float:hover{ transform:translateY(-3px) scale(1.05); }
+  @media (min-width: 768px){ #whatsapp-float{ right:1.75rem; bottom:1.75rem; } }
 
   #recaptcha-container{display:flex; justify-content:center;}
 
@@ -366,6 +386,11 @@
     <div class="border-t border-[#E4E3E0] py-5 text-center text-[11px] text-[#8A8783]">© 2026 AUREVIA CLOTHING. All Rights Reserved.</div>
   </footer>
 
+  <!-- FLOATING WHATSAPP BUTTON -->
+  <a href="https://wa.me/917385009275" target="_blank" rel="noopener" id="whatsapp-float" aria-label="Chat with us on WhatsApp">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.6 14.3c-.2.6-1.3 1.2-1.9 1.3-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3.1s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.6.7 1.9.8 2 .1.2.1.4 0 .6-.1.2-.2.3-.4.5l-.5.6c-.2.2-.3.4-.1.7.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.5 1.6.3.1.5.1.6-.1l.9-1c.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.4.4.1.2.1.9-.1 1.5z"/></svg>
+  </a>
+
 </div>
 
 <!-- SIZE GUIDE MODAL -->
@@ -484,6 +509,15 @@ const CATEGORIES = [
   { key:'gym-accessories', label:'Gym Accessories', count:33 },
 ];
 const SIZES = ['S-36','M-38','L-40','XL-42','XXL-44','XXXL-46'];
+const WHATSAPP_ORDER_NUMBER = '917385009275';
+const INDIAN_STATES = [
+  'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana',
+  'Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur',
+  'Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana',
+  'Tripura','Uttar Pradesh','Uttarakhand','West Bengal',
+  'Andaman and Nicobar Islands','Chandigarh','Dadra and Nagar Haveli and Daman and Diu','Delhi',
+  'Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry'
+];
 
 const NAME_WORDS = {
   shirts:['Oxford','Linen','Signature','Tailored','Classic','Slim-Fit','Heritage','Poplin','Studio','Essential'],
@@ -993,6 +1027,176 @@ function renderCartPage(){
   </section>`;
 }
 
+/* ---------------------------------------------------------------
+   WHATSAPP CHECKOUT — Shopify-style order form for "Buy Now".
+   Collects shipping + payment preference, then sends the full
+   order to the store's WhatsApp number instead of a card gateway.
+--------------------------------------------------------------- */
+const SHIPPING_METHODS = [
+  { key:'standard', label:'Standard Shipping', cost:60 },
+  { key:'express', label:'Express Shipping', cost:99 }
+];
+const PAYMENT_METHODS = [
+  { key:'prepaid', label:'Prepaid' },
+  { key:'cod', label:'Cash on Delivery' }
+];
+
+function renderWhatsAppCheckout(productId, size){
+  const p = PRODUCT_BY_ID[productId];
+  if(!p){ return `<div class="max-w-xl mx-auto px-6 py-24 text-center"><p class="text-sm text-[#8A8783]">Product not found.</p><a href="#/products" class="btn-outline mt-6 inline-block">Back to shop</a></div>`; }
+  return `
+  <section class="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+    <h1 class="font-display text-2xl sm:text-3xl tracking-tight mb-2">Checkout</h1>
+    <p class="text-xs text-[#8A8783] mb-8">Your order details will be sent to us on WhatsApp to confirm and complete payment.</p>
+
+    <div class="flex gap-4 mb-10 pb-6 border-b border-[#E4E3E0]">
+      <div class="w-20 h-24 bg-[#F4F4F3] shrink-0 overflow-hidden"><img src="${p.images[0]}" class="w-full h-full object-cover" alt="${p.name}"></div>
+      <div>
+        <p class="text-sm font-medium">${p.name}</p>
+        <p class="text-xs text-[#8A8783] mt-1">Size: ${size}</p>
+        <p class="text-sm mt-1">${inr(p.price)}</p>
+      </div>
+    </div>
+
+    <form id="wa-checkout-form" class="space-y-8">
+      <div>
+        <h2 class="text-xs uppercase tracking-widest font-semibold mb-4">Contact & Shipping Details</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input type="text" id="wa-firstname" placeholder="First name" required>
+          <input type="text" id="wa-lastname" placeholder="Last name" required>
+          <input type="email" id="wa-email" placeholder="Email address" class="sm:col-span-2" required>
+          <input type="tel" id="wa-phone" placeholder="Phone number" class="sm:col-span-2" required>
+          <input type="text" id="wa-address" placeholder="Address (house no., street, area)" class="sm:col-span-2" required>
+          <input type="text" id="wa-pincode" placeholder="Pincode" inputmode="numeric" required>
+          <input type="text" id="wa-city" placeholder="City" required>
+          <select id="wa-state" class="sm:col-span-2" required>
+            <option value="" disabled selected>Select State</option>
+            ${INDIAN_STATES.map(s=>`<option value="${s}">${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-xs uppercase tracking-widest font-semibold mb-4">Shipping Method</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="wa-shipping-options">
+          ${SHIPPING_METHODS.map((m,i)=>`
+            <div class="option-chip flex items-center justify-between ${i===0?'selected':''}" data-shipping="${m.key}" data-cost="${m.cost}">
+              <span class="text-sm">${m.label}</span>
+              <span class="text-sm font-medium">${inr(m.cost)}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-xs uppercase tracking-widest font-semibold mb-4">Payment Option</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="wa-payment-options">
+          ${PAYMENT_METHODS.map((m,i)=>`
+            <div class="option-chip text-center ${i===0?'selected':''}" data-payment="${m.key}">
+              <span class="text-sm">${m.label}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="border-t border-[#E4E3E0] pt-5">
+        <div class="flex justify-between text-sm mb-1"><span>Item</span><span>${inr(p.price)}</span></div>
+        <div class="flex justify-between text-sm mb-3"><span>Shipping</span><span id="wa-shipping-cost">${inr(SHIPPING_METHODS[0].cost)}</span></div>
+        <div class="flex justify-between text-base font-medium"><span>Total</span><span id="wa-total">${inr(p.price + SHIPPING_METHODS[0].cost)}</span></div>
+      </div>
+
+      <p id="wa-form-error" class="hidden text-xs text-[#B21F24]"></p>
+      <button type="submit" class="btn-primary w-full">Continue Order</button>
+    </form>
+  </section>`;
+}
+
+function initWhatsAppCheckout(productId, size){
+  const p = PRODUCT_BY_ID[productId];
+  if(!p) return;
+  let shipping = SHIPPING_METHODS[0];
+  let payment = PAYMENT_METHODS[0];
+
+  function updateTotals(){
+    document.getElementById('wa-shipping-cost').textContent = inr(shipping.cost);
+    document.getElementById('wa-total').textContent = inr(p.price + shipping.cost);
+  }
+  qsa('#wa-shipping-options .option-chip').forEach(chip=>{
+    chip.onclick = ()=>{
+      qsa('#wa-shipping-options .option-chip').forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected');
+      shipping = SHIPPING_METHODS.find(m=>m.key===chip.dataset.shipping);
+      updateTotals();
+    };
+  });
+  qsa('#wa-payment-options .option-chip').forEach(chip=>{
+    chip.onclick = ()=>{
+      qsa('#wa-payment-options .option-chip').forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected');
+      payment = PAYMENT_METHODS.find(m=>m.key===chip.dataset.payment);
+    };
+  });
+
+  document.getElementById('wa-checkout-form').addEventListener('submit', e=>{
+    e.preventDefault();
+    const firstname = document.getElementById('wa-firstname').value.trim();
+    const lastname = document.getElementById('wa-lastname').value.trim();
+    const email = document.getElementById('wa-email').value.trim();
+    const phone = document.getElementById('wa-phone').value.trim();
+    const address = document.getElementById('wa-address').value.trim();
+    const pincode = document.getElementById('wa-pincode').value.trim();
+    const city = document.getElementById('wa-city').value.trim();
+    const state = document.getElementById('wa-state').value;
+    const errEl = document.getElementById('wa-form-error');
+
+    if(!firstname || !lastname || !email || !phone || !address || !pincode || !city || !state){
+      errEl.textContent = 'Please fill in all fields before continuing.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if(!/^\S+@\S+\.\S+$/.test(email)){
+      errEl.textContent = 'Please enter a valid email address.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if(phone.replace(/\D/g,'').length < 10){
+      errEl.textContent = 'Please enter a valid phone number.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if(pincode.replace(/\D/g,'').length !== 6){
+      errEl.textContent = 'Please enter a valid 6-digit pincode.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    errEl.classList.add('hidden');
+
+    const total = p.price + shipping.cost;
+    const productLink = `${location.origin}${location.pathname}#/product/${p.id}`;
+    const message = [
+      `Hi Aurevia Clothing! I'd like to place an order:`,
+      ``,
+      `Product: ${p.name}`,
+      `Size: ${size}`,
+      `Price: ${inr(p.price)}`,
+      `Product Link: ${productLink}`,
+      ``,
+      `Customer Details:`,
+      `Name: ${firstname} ${lastname}`,
+      `Email: ${email}`,
+      `Phone: ${phone}`,
+      `Address: ${address}`,
+      `City/State: ${city}, ${state} - ${pincode}`,
+      ``,
+      `Shipping: ${shipping.label} (${inr(shipping.cost)})`,
+      `Payment: ${payment.label}`,
+      ``,
+      `Total: ${inr(total)}`
+    ].join('\n');
+
+    window.open(`https://wa.me/${WHATSAPP_ORDER_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
+    toast('Order details sent to WhatsApp');
+  });
+}
+
 const STATIC_PAGES = {
   about:{
     title:'About Us',
@@ -1122,6 +1326,9 @@ function router(){
   }else if(parts[0]==='product' && parts[1]){
     page.innerHTML = renderProductPage(parts[1]);
     initProductPage(parts[1]);
+  }else if(parts[0]==='whatsapp-checkout' && parts[1] && parts[2]){
+    page.innerHTML = renderWhatsAppCheckout(parts[1], decodeURIComponent(parts[2]));
+    initWhatsAppCheckout(parts[1], decodeURIComponent(parts[2]));
   }else if(parts[0]==='cart'){
     page.innerHTML = renderCartPage();
     bindCartLineEvents(page);
@@ -1191,8 +1398,7 @@ function initProductPage(id){
   };
   document.getElementById('btn-buy-now').onclick = ()=>{
     if(!selectedSize){ document.getElementById('size-required-msg').classList.remove('hidden'); return; }
-    addToCart(p.id, selectedSize, 1);
-    startPayUCheckout();
+    location.hash = `#/whatsapp-checkout/${p.id}/${encodeURIComponent(selectedSize)}`;
   };
 
   document.getElementById('btn-open-sizeguide').onclick = openSizeGuide;
@@ -1433,8 +1639,16 @@ async function createPayUPaymentAndRedirect(cart, amount, customer){
     }
 
     if(!res.ok){
-      const backendMessage = data.message || data.error || data.detail || JSON.stringify(data);
+      const backendMessage = (data && (data.message || data.error || data.detail)) || JSON.stringify(data);
       throw new Error(`Xano error (HTTP ${res.status}): ${backendMessage}`);
+    }
+
+    // Xano can return HTTP 200 with an empty/null body (e.g. the endpoint's
+    // function stack didn't reach its "Prepare Response" step for this
+    // request). Catch that here with a clear message instead of a raw
+    // "null is not an object" crash further down.
+    if(!data || typeof data !== 'object'){
+      throw new Error(`Xano returned an empty or unexpected response (HTTP ${res.status}): ${rawBody ? rawBody.slice(0,300) : '(empty body)'}`);
     }
 
     const required = ['key','txnid','amount','firstname','email','phone','productinfo','hash','payu_url','surl','furl'];
