@@ -1285,7 +1285,7 @@ function initTiltCards(){
   });
 }
 // ---- PayU Checkout (via Xano backend) ----
-const XANO_CREATE_PAYMENT_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:AMOGxV05/create-payment';
+const XANO_CREATE_PAYMENT_URL = 'https://x8ki-letl-twmt.n7.xano.io/api:AMOGxV05/payu/create-payment';
 const PENDING_TXN_KEY = 'aurevia_pending_txn';
 
 function generateTxnId(){
@@ -1404,17 +1404,44 @@ async function createPayUPaymentAndRedirect(cart, amount, customer){
     productinfo: buildProductInfo(cart),
     transaction_id: txnid
   };
+
+  // ---- TEMPORARY DEBUG LOGGING — remove once the Xano integration is confirmed stable ----
+  console.groupCollapsed('%c[PayU Debug] create-payment → request', 'color:#B21F24;font-weight:bold');
+  console.log('URL:', XANO_CREATE_PAYMENT_URL);
+  console.log('Body:', payload);
+  console.groupEnd();
+
+  let res, rawBody, data;
   try{
-    const res = await fetch(XANO_CREATE_PAYMENT_URL, {
+    res = await fetch(XANO_CREATE_PAYMENT_URL, {
       method:'POST',
       headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify(payload)
     });
-    if(!res.ok) throw new Error('Payment service returned an error (' + res.status + ').');
-    const data = await res.json();
+
+    rawBody = await res.text();
+    console.groupCollapsed('%c[PayU Debug] create-payment → response', 'color:#B21F24;font-weight:bold');
+    console.log('HTTP Status:', res.status, res.statusText);
+    console.log('Raw response body:', rawBody);
+    console.groupEnd();
+
+    try{
+      data = rawBody ? JSON.parse(rawBody) : {};
+    }catch(parseErr){
+      console.error('[PayU Debug] Response body was not valid JSON:', parseErr);
+      throw new Error(`Xano returned a non-JSON response (HTTP ${res.status}): ${rawBody ? rawBody.slice(0,300) : '(empty body)'}`);
+    }
+
+    if(!res.ok){
+      const backendMessage = data.message || data.error || data.detail || JSON.stringify(data);
+      throw new Error(`Xano error (HTTP ${res.status}): ${backendMessage}`);
+    }
+
     const required = ['key','txnid','amount','firstname','email','phone','productinfo','hash','payu_url','surl','furl'];
     const missing = required.filter(k => data[k]===undefined || data[k]===null || data[k]==='');
-    if(missing.length){ throw new Error('Payment service response was incomplete.'); }
+    if(missing.length){
+      throw new Error(`Xano response is missing required field(s): ${missing.join(', ')}. Full response: ${JSON.stringify(data)}`);
+    }
 
     // Stash what we need to reconcile the order once PayU redirects back.
     localStorage.setItem(PENDING_TXN_KEY, JSON.stringify({
@@ -1423,9 +1450,9 @@ async function createPayUPaymentAndRedirect(cart, amount, customer){
     submitToPayU(data);
     // Browser is navigating away to PayU now — no further UI updates needed here.
   }catch(e){
-    console.error('PayU payment creation failed:', e);
+    console.error('[PayU Debug] create-payment failed — full exception:', e);
     showPayUError(
-      'We could not reach the payment gateway. Please check your connection and try again.',
+      e && e.message ? e.message : 'We could not reach the payment gateway. Please check your connection and try again.',
       ()=>createPayUPaymentAndRedirect(cart, amount, customer)
     );
   }
